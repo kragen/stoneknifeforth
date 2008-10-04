@@ -29,6 +29,8 @@ e — the location of the entry point word in the ELF header
 o — the location of the word in the ELF program header that specifies the .ORG
 S — the location of the word in the ELF program header that specifies filesize
 $ — the end of the program
+- — subtraction
+` — the end of the headers
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -54,6 +56,7 @@ v h ( ELF header, Elf32_Ehdr )
     ( p_filesz:) v S # 0    ( p_memsz:) # 655360 ( should be enough for anyone)
      ( p_flags:) # 7        ( p_align:) # 4096
 
+v `
 ( mov bl, 42) b 179 b 42
    ( inc eax) b 64
   ( int 0x80) b 205 b 128
@@ -61,6 +64,6 @@ v $
 
 : -  ~ 1 +  + ; ( take two's complement, then add, to subtract )
 
-^ o @ 52 + 32 + e ! ( set entry point correctly wrt origin )
+^ ` h - o @ + e ! ( set entry point correctly wrt origin )
 $  h -  S ! ( subtract h from $ to get size of whole program )
 h S @ W Q
