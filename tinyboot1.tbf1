@@ -47,11 +47,17 @@ A — table of addresses of definitions
 F — 4 *
 C — register a Colon definition in the tables
 V — register a Variable definition in the tables
+& — compile a byte if it's a colon or variable definition
 O — boolean OR
 N — boolean NOT
 w — like G, but skips whitespace
 B — a buffer for w
-E — stick the item on top of the stack at H as four bytes
+E — stick the item on top of the stack at H as four bytes, advancing H by 4
+L — compile code to push the constant on the compile-time stack
+t — one step in base-ten decoding: x <- 10x + y
+n — parse a number from input and push it on the compile-time stack
+J — compile a forward conditional jump [
+P — resolve a forward conditional jump ]
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -123,6 +129,14 @@ v B # 0 ( buffer for w )
     R ; ] ( okay, and otherwise, it’s a variable... )
   F A + @ L ;
 
+( J: compile a forward conditional jump )
+: J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 117 . H @ 0 . ( jnz 0 ) ;
+( P: resolve a forward conditional jump by backpatching )
+( 1 - is needed because the saved address is one byte inside the jnz 
+  instruction, but the offset should be calculated from the beginning of the 
+  next instruction )
+: P  d H @ x - 1 -  x s ;  
+
 ( routine to dispatch a byte being compiled )
 : D 
   d 40 = [ { G 41 - } ; ]     ( drop comments until right paren )
@@ -135,6 +149,9 @@ v B # 0 ( buffer for w )
   d 64 = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
   d 58 = [ p w C R ; ]        ( : registers the next non-blank as a colon 
                                   definition, then compiles a procedure prolog )
+  d 91 = [ p J ; ]            ( [ compiles a conditional jump, pushing an 
+                                  address for backpatching )
+  d 93 = [ p P ; ]            ( ] backpatches the address on the compile stack )
   d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
                                   variable label )
   d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )
@@ -143,7 +160,7 @@ v B # 0 ( buffer for w )
   d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
   . ;                     ( default is to copy to output )
-: K ( routine to try to "kompile" input to output, i.e. copy it w/o comments )
+: K ( routine to "kompile" input to output )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
     D 1 }
 
