@@ -1,0 +1,5 @@
+#!/bin/sh
+set -ve
+./tinyboot.py < hello42.tbf1 > hello42
+chmod 755 hello42
+./hello42 || echo $?
