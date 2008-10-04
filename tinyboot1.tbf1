@@ -140,6 +140,11 @@ v B # 0 ( buffer for w )
   next instruction )
 : P  d H @ x - 1 -  x s ;  
 
+( implementation of <.  I hope this is < and not >. )
+: i 43 . 4 . 36 . ( sub [%esp], %eax )   88 . 88 . ( pop %eax twice ) 
+    15 . 157 . 192 . ( setge %al )       254 . 200 . ( dec %al )
+    15 . 190 . 192 . ( movsbl %al, %eax ) ;
+
 ( routine to dispatch a byte being compiled )
 : D 
   d 40 = [ { G 41 - } ; ]     ( drop comments until right paren )
@@ -161,7 +166,9 @@ v B # 0 ( buffer for w )
                                   variable label )
   d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )
   d 126 = [ p 247 . 208 . ; ] ( ~ is `not %eax` )
-  d 115 = [ p 89 . 136 . 8 . ; ] ( s is `pop %ecx; movb %cl, [%eax]` )
+  d 115 = [ p 89 . 136 . 8 . 88 . ; ] ( s is `pop %ecx; movb %cl, [%eax]; 
+                                              pop %eax` )
+  d 60 = [ p i ; ]              ( < is implemented in “i” )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
   d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
