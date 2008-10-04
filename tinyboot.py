@@ -129,17 +129,20 @@ def bitwise_not():
 def return_from_function():
     global program_counter
     program_counter = rstack.pop()
+def read_byte():
+    stack.append(ord(sys.stdin.read(1)))
 
 run_time_dispatch = {    
     '(': eat_comment,
     'W': write_out,
+    'G': read_byte,
     'Q': quit,
     '+': add,
-    ' ': nop, '\n': nop,
+    '~': bitwise_not,
     '@': fetch,
     '!': store,
-    '~': bitwise_not,
     ';': return_from_function,
+    ' ': nop, '\n': nop,
 }
 for digit in '0123456789': run_time_dispatch[digit] = push_literal
 
@@ -152,12 +155,12 @@ def tbfrun():
         eat_byte()
         run_time_dispatch[byte]()
 
-def main():
+def main(infile):
     global program
-    program = sys.stdin.read()
+    program = infile.read()
     tbfcompile()
     debug(str(memory))
     tbfrun()
     assert False, "tbfrun returned"
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': main(file(sys.argv[1]))

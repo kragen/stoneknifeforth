@@ -60,10 +60,12 @@ v `
 ( mov bl, 42) b 179 b 42
    ( inc eax) b 64
   ( int 0x80) b 205 b 128
+v X b 0
 v $
 
 : -  ~ 1 +  + ; ( take two's complement, then add, to subtract )
 
 ^ ` h - o @ + e ! ( set entry point correctly wrt origin )
 $  h -  S ! ( subtract h from $ to get size of whole program )
+G X ! ( read an input byte, store it at X )
 h S @ W Q
