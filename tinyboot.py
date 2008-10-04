@@ -150,6 +150,13 @@ def store_byte():
     memory[addr] = stack.pop() & 255
 def bitwise_not():
     stack.append(stack.pop() ^ 0xFfffFfff)
+def less_than():
+    b = stack.pop()
+    a = stack.pop()
+    if a < b:
+        stack.append(1)
+    else:
+        stack.append(0)
 def return_from_function():
     global program_counter
     program_counter = rstack.pop()
@@ -175,9 +182,10 @@ run_time_dispatch = {
     'Q': quit,
     '+': add,
     '~': bitwise_not,
+    '<': less_than,
     '@': fetch,
     '!': store,
-    # 'f': fetch_byte,
+    # 'f': fetch_byte, not yet needed
     's': store_byte,
     ';': return_from_function,
     '[': conditional, ']': nop,

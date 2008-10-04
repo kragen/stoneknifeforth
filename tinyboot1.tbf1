@@ -22,6 +22,7 @@ Q — exits the program with a return code of 0
 ! — stores to a word in memory
 ~ — bitwise-negates a word
 ; — returns from a function
+< — a less-than test
 
 Defined in this file, all necessarily run-time:
 h — the ELF header
@@ -37,6 +38,7 @@ d — DUP
 p — DROP
 x — SWAP
 = — an equality test
+> — a greater-than test
 . — add a byte to the program being compiled
 D — dispatch a byte being compiled
 R — compile the sequence `xchg %ebp, %esp`
@@ -91,7 +93,7 @@ v X # 0  v Y # 0  v Z # 0 ( temp vars )
 
 : -  ~ 1 +  + ; ( take two's complement, then add, to subtract )
 : N [ 0 ; ] 1 ; ( Boolean negation ) : = - N ; ( equality )
-: O [ p 1 ; ] ; ( Boolean OR )
+: O [ p 1 ; ] ; ( Boolean OR )       : > x < ; ( greater-than )
 
 ( routine to add a byte to the program being compiled )
 : . H @ s  H @ 1 + H ! ;
@@ -105,6 +107,12 @@ v A * 1024 ( table of Addresses of definitions )
 v B # 0 ( buffer for w )
 : w { G B !  B @ 32 = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
 : E H @ ! H @ 4 + H ! ; ( store word on top of stack at H, praise non-aligned access )
+: I d 48 <  x 57 >  O N ; ( isdigit )
+: L 80 . ( push %eax ) 184 . ( load immediate %eax ) E ; ( push a literal )
+: t x d F + d +  + ; ( for base-10 decoding: A B -> 10A + B )
+: n { G d I N [ p ; ] 48 - t 1 }  ( parse a number from successive digits )
+( NOTE: n eats the next byte after the end of the number and discards it. )
+
 
 ( routine to compile bytes found in the table )
 : & d F T + @ 1 = [ ( if it’s a subroutine...)
@@ -113,8 +121,7 @@ v B # 0 ( buffer for w )
     x F A + @ x - ( find offset to subroutine )
     E ( encode it )
     R ; ] ( okay, and otherwise, it’s a variable... )
-  80 . ( push %eax ) 184 . ( load immediate %eax )
-  F A + @ E ;
+  F A + @ L ;
 
 ( routine to dispatch a byte being compiled )
 : D 
@@ -125,11 +132,14 @@ v B # 0 ( buffer for w )
   d 33 = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
   d 64 = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
   d 58 = [ p w C R ; ]        ( : registers the next non-blank as a colon 
-                                  definition, then compiles a procedure prologue )
-  d 118 = [ p w V ; ]         ( v registers the next non-blank as a variable label )
+                                  definition, then compiles a procedure prolog )
+  d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
+                                  variable label )
   d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )
   d 126 = [ p 247 . 208 . ; ] ( ~ is `not %eax` )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
+  d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
+                                to push that number immediate )
   . ;                     ( default is to copy to output )
 : K ( routine to try to "kompile" input to output, i.e. copy it w/o comments )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
