@@ -1,8 +1,9 @@
 - other primitives in interpreter:
   D [ ] (if)
   D { } (do-while)
-  - f s (byte fetch and store)
-  - < (less than)
+  - f (byte fetch)
+  D s (byte store)
+  D < (less than)
   D * (empty space allocation)
   D G (read a byte of input or return -1)
 D get it to copy its input into its output
@@ -16,11 +17,13 @@ D get it to copy its input into its output
   - <
   - ^
   D ;
-  - :
+  D :
   - #
-  - v
+  - b
+  D v
   - *
   D ( space newline
-  - numeric literals
+  D numeric literals
   D function calls
+  - G W Q
 - hey, what about initializing %ebp?
