@@ -38,6 +38,7 @@ p — DROP
 = — an equality test
 . — add a byte to the program being compiled
 D — dispatch a byte being compiled
+R — compile the sequence `xchg %ebp, %esp`
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -77,8 +78,18 @@ v X # 0  v Y # 0  v Z # 0 ( temp vars )
 : = - [ 0 ; ] 1 ; ( equality: subtraction followed by Boolean negation )
 ( routine to add a byte to the program being compiled )
 : . H @ s  H @ 1 + H ! ;
+: R 135 . 236 . ; ( xchg %ebp, %esp )
 ( routine to dispatch a byte being compiled )
-: D d 40 = [ { G 41 - } ; ] . ;
+: D 
+  d 40 = [ { G 41 - } ; ]     ( drop comments until right paren )
+  d 32 = [ p ; ]              ( drop spaces )
+  d 10 = [ p ; ]              ( drop newlines )
+  d 59 = [ p R 195 . ; ]      ( ; is R, then `ret` )
+  d 33 = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
+  d 64 = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
+  d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )
+  d 126 = [ p 247 . 208 . ; ] ( ~ is `not %eax` )
+  . ;                     ( default is to copy to output )
 : K ( routine to try to "kompile" input to output, i.e. copy it w/o comments )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
     D 1 }
