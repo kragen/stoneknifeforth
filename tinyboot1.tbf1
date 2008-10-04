@@ -58,6 +58,7 @@ t — one step in base-ten decoding: x <- 10x + y
 n — parse a number from input and push it on the compile-time stack
 J — compile a forward conditional jump [
 P — resolve a forward conditional jump ]
+j — compile a backwards negative conditional jump }
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -131,6 +132,8 @@ v B # 0 ( buffer for w )
 
 ( J: compile a forward conditional jump )
 : J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 117 . H @ 0 . ( jnz 0 ) ;
+( j: compile a backward conditional jump )
+: j 133 . 192 . 88 . 117 . H @ - 1 - . ( jnz whatever ) ;
 ( P: resolve a forward conditional jump by backpatching )
 ( 1 - is needed because the saved address is one byte inside the jnz 
   instruction, but the offset should be calculated from the beginning of the 
@@ -152,6 +155,8 @@ v B # 0 ( buffer for w )
   d 91 = [ p J ; ]            ( [ compiles a conditional jump, pushing an 
                                   address for backpatching )
   d 93 = [ p P ; ]            ( ] backpatches the address on the compile stack )
+  d 123 = [ p H @ ; ]         ( { merely pushes an address to jump back to )
+  d 125 = [ p j ; ]           ( } compiles a conditional jump to that address )
   d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
                                   variable label )
   d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )

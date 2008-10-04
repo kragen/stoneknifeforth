@@ -36,6 +36,7 @@ jump:   test %eax, %eax
         pop %eax
         jnz foo
         jnz bar
+        jz bar
 bar:    nop
 rshift: pop %ecx
         sar %cl, %eax

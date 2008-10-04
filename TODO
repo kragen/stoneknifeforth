@@ -9,7 +9,7 @@
 D get it to copy its input into its output
 - get it to "assemble" a dumb string of instruction bytes
   D [ ]
-  - { }
+  D { }
   D @ !
   - f s
   D +
