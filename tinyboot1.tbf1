@@ -28,9 +28,15 @@ h — the ELF header
 e — the location of the entry point word in the ELF header
 o — the location of the word in the ELF program header that specifies the .ORG
 S — the location of the word in the ELF program header that specifies filesize
-$ — the end of the program
+$ — the start of the area where the program gets compiled
 - — subtraction
 ` — the end of the headers
+H — the point where the program is currently getting compiled
+X, Y, Z — three temporary variables
+d — DUP
+p — DROP
+= — an equality test
+. — add a byte to the program being compiled
 )
 
 v h ( ELF header, Elf32_Ehdr )
