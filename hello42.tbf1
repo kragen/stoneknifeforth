@@ -1,0 +1,63 @@
+( First step toward a tiny bootstrap Forth compiler written in itself.
+
+Generates an ELF executable for x86 Linux that exits with return code
+42, following Brian Raiter’s lead.
+
+Compile-time primitives:
+( — defines a comment that extends to the next right-paren
+v — defines a dataspace label, like for a variable.
+b — compiles a literal byte, numerically, into data space.
+# — compiles a literal four-byte little-endian number into data space.
+^ — the location where the program should start executing [everything else
+    is just definitions]
+space, newline — ignored
+
+Run-time primitives:
+W — given an address and size on the stack, writes the specified number of 
+    bytes to stdout
+Q — exits the program with a return code of 0
++ — adds two numbers
+@ — fetches a word from memory
+! — stores to a word in memory
+~ — bitwise-negates a word
+
+Defined in this file, all necessarily run-time:
+h — the ELF header
+e — the location of the entry point word in the ELF header
+o — the location of the word in the ELF program header that specifies the .ORG
+S — the location of the word in the ELF program header that specifies filesize
+$ — the end of the program
+)
+
+v h ( ELF header, Elf32_Ehdr )
+( ELF info from http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
+( but I'm using 4096 for my origin rather than 0x08048000)
+    ( e_ident:) b 127 b 69 ( E) b 76 ( L) b 70 ( F) b 1 b 1 b 1
+                b 0 b 0 b 0  b 0 b 0 b 0  b 0 b 0 b 0 ( 9 bytes of padding)
+     ( e_type:) b 2 b 0   ( e_machine:) b 3 b 0
+  ( e_version:) # 1         ( e_entry:) v e # 0
+               ( The program header offset is 52, the same as the header size,
+                  since the program header immediately follows this ELF header )
+    ( e_phoff:) # 52        ( e_shoff:) # 0
+    ( e_flags:) # 0        ( e_ehsize:) b 52 b 0 
+( e_phentsize:) b 32 b 0    ( e_phnum:) b 1 b 0 
+( e_shentsize:) b 40 b 0 ( e_shentnum:) b 0 b 0
+ ( e_shstrndx:) b 0 b 0 
+
+( program header, Elf32_Phdr; note that we are now 52 bytes from 'h' )
+      ( p_type:) # 1       ( p_offset:) # 0 
+     ( p_vaddr:) v o # 4096 ( p_paddr:) # 0 ( should be 0, not org as Brian has)
+( Note that you can only make p_memsz as large as you want if p_flags has a 
+  2 = PF_W in it.  Otherwise, even one extra byte results in a segfault. )
+    ( p_filesz:) v S # 0    ( p_memsz:) # 655360 ( should be enough for anyone)
+     ( p_flags:) # 7        ( p_align:) # 4096
+
+( mov bl, 42) b 179 b 42
+   ( inc eax) b 64
+  ( int 0x80) b 205 b 128
+
+v $
+
+^ o @ 52 + 32 + e ! ( set entry point correctly wrt origin )
+$  h ~ 1 +  + S ! ( subtract h from $ to get size of whole program )
+h S @ W Q
