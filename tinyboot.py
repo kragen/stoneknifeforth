@@ -199,7 +199,6 @@ def main(infile):
     global program
     program = infile.read()
     tbfcompile()
-    debug(str(memory))
     tbfrun()
     assert False, "tbfrun returned"
 
