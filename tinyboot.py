@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Tiny bootstrapping interpreter for the first bootstrap stage.
 
 Implements an extremely minimal Forth-like language, used to write
@@ -68,10 +69,27 @@ def literal_word():
     "Compile a little-endian literal 32-byte number into data space."
     advance_past_whitespace()
     memory.extend(as_bytes(read_number()))
+def allocate_space():
+    advance_past_whitespace()
+    memory.extend([0] * read_number())
 def set_start_address():
     global start_address
     start_address = program_counter
 def nop(): pass
+
+# We have to find the backwards jump targets for loops while scanning
+# forward.  Otherwise we’d have to find them by scanning backwards,
+# and you can’t correctly skip comments that way, since comments don’t
+# nest.
+
+jump_targets = {}
+def start_conditional():
+    stack.append(program_counter)
+def end_conditional():
+    jump_targets[stack.pop()] = program_counter
+start_loop = start_conditional
+def end_loop():
+    jump_targets[program_counter] = stack.pop()
 
 compile_time_dispatch = {
     '(': eat_comment,
@@ -79,7 +97,10 @@ compile_time_dispatch = {
     ':': define_function,
     'b': literal_byte,
     '#': literal_word,
+    '*': allocate_space,
     '^': set_start_address,
+    '[': start_conditional, ']': end_conditional,
+    '{': start_loop,        '}': end_loop,
     ' ': nop, '\n': nop,
 }
 
@@ -111,7 +132,7 @@ def write_out():
 def quit():
     sys.exit(0)
 def add():
-    stack.append(stack.pop() + stack.pop())
+    stack.append((stack.pop() + stack.pop()) & 0xFfffFfff)
 def push_literal():
     global program_counter
     program_counter -= 1
@@ -124,13 +145,28 @@ def fetch():
 def store():
     addr = stack.pop()
     memory[addr:addr+4] = as_bytes(stack.pop())
+def store_byte():
+    addr = stack.pop()
+    memory[addr] = stack.pop() & 255
 def bitwise_not():
-    stack.append(stack.pop() ^ 0xffffffff)
+    stack.append(stack.pop() ^ 0xFfffFfff)
 def return_from_function():
     global program_counter
     program_counter = rstack.pop()
 def read_byte():
-    stack.append(ord(sys.stdin.read(1)))
+    byte = sys.stdin.read(1)
+    if byte == '':
+        stack.append(-1)
+    else:
+        stack.append(ord(byte))
+def conditional():
+    if stack.pop(): return
+    global program_counter
+    program_counter = jump_targets[program_counter]
+def loop():
+    if not stack.pop(): return
+    global program_counter
+    program_counter = jump_targets[program_counter]
 
 run_time_dispatch = {    
     '(': eat_comment,
@@ -141,7 +177,11 @@ run_time_dispatch = {
     '~': bitwise_not,
     '@': fetch,
     '!': store,
+    # 'f': fetch_byte,
+    's': store_byte,
     ';': return_from_function,
+    '[': conditional, ']': nop,
+    '{': nop,         '}': loop,
     ' ': nop, '\n': nop,
 }
 for digit in '0123456789': run_time_dispatch[digit] = push_literal

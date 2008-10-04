@@ -60,12 +60,22 @@ v `
 ( mov bl, 42) b 179 b 42
    ( inc eax) b 64
   ( int 0x80) b 205 b 128
-v X b 0
-v $
+v $ * 4096
 
+v H # 0 ( "HERE", where we're compiling )
+v X # 0  v Y # 0  v Z # 0 ( temp vars )
+
+: d  X !  X @  X @ ; ( DUP )  : p X ! ; ( DROP/pop )
 : -  ~ 1 +  + ; ( take two's complement, then add, to subtract )
+: = - [ 0 ; ] 1 ; ( equality: subtraction followed by Boolean negation )
+( routine to add a byte to the program being compiled )
+: . H @ s  H @ 1 + H ! ;
+: K ( routine to "kat" input to output, i.e. copy it )
+  { G d 0 1 - = [ p ; ] ( return if char is -1 )
+    . 1 }
 
 ^ ` h - o @ + e ! ( set entry point correctly wrt origin )
-$  h -  S ! ( subtract h from $ to get size of whole program )
-G X ! ( read an input byte, store it at X )
+$ H ! ( initialize H )
+K ( copy input into output )
+H @  h -  S ! ( subtract h from H to get size of whole program )
 h S @ W Q

@@ -1,8 +1,9 @@
 - other primitives in interpreter:
-  - [ ] (if)
-  - { } (do-while)
+  D [ ] (if)
+  D { } (do-while)
   - f s (byte fetch and store)
   - < (less than)
-  - * (empty space allocation)
+  D * (empty space allocation)
   D G (read a byte of input or return -1)
+D get it to copy its input into its output
 - get it to "assemble" a dumb string of instruction bytes
