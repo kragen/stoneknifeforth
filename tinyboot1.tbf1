@@ -37,6 +37,7 @@ d — DUP
 p — DROP
 = — an equality test
 . — add a byte to the program being compiled
+D — dispatch a byte being compiled
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -76,9 +77,11 @@ v X # 0  v Y # 0  v Z # 0 ( temp vars )
 : = - [ 0 ; ] 1 ; ( equality: subtraction followed by Boolean negation )
 ( routine to add a byte to the program being compiled )
 : . H @ s  H @ 1 + H ! ;
-: K ( routine to "kat" input to output, i.e. copy it )
+( routine to dispatch a byte being compiled )
+: D d 40 = [ { G 41 - } ; ] . ;
+: K ( routine to try to "kompile" input to output, i.e. copy it w/o comments )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
-    . 1 }
+    D 1 }
 
 ^ ` h - o @ + e ! ( set entry point correctly wrt origin )
 $ H ! ( initialize H )
