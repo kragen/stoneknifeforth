@@ -18,6 +18,8 @@ def debug(text):
 
 start_address = None
 memory = []                  # a list of bytes represented as integers
+stack = []
+rstack = []
 
 ### Compile-time actions.
 # Note that these should leave program_counter pointing after the
@@ -39,8 +41,19 @@ def dataspace_label():
     "Define a label in data space."
     advance_past_whitespace()
     name = program[program_counter]
-    run_time_dispatch[name] = push_dataspace_label(len(memory))
     eat_byte()
+    run_time_dispatch[name] = push_dataspace_label(len(memory))
+def call_function(n):
+    def rv():
+        global program_counter
+        rstack.append(program_counter)
+        program_counter = n
+    return rv
+def define_function():
+    advance_past_whitespace()
+    name = program[program_counter]
+    eat_byte()
+    run_time_dispatch[name] = call_function(program_counter)
 def read_number():
     start = program_counter
     while program[program_counter] in '0123456789': eat_byte()
@@ -63,6 +76,7 @@ def nop(): pass
 compile_time_dispatch = {
     '(': eat_comment,
     'v': dataspace_label,
+    ':': define_function,
     'b': literal_byte,
     '#': literal_word,
     '^': set_start_address,
@@ -87,7 +101,6 @@ def tbfcompile():
 # shouldn't run into any compile-time actions there, right?
 # Except maybe comments.
 
-stack = []
 def write_out():
     "Given an address and a count, write out some memory to stdout."
     count = stack.pop()
@@ -113,6 +126,9 @@ def store():
     memory[addr:addr+4] = as_bytes(stack.pop())
 def bitwise_not():
     stack.append(stack.pop() ^ 0xffffffff)
+def return_from_function():
+    global program_counter
+    program_counter = rstack.pop()
 
 run_time_dispatch = {    
     '(': eat_comment,
@@ -123,6 +139,7 @@ run_time_dispatch = {
     '@': fetch,
     '!': store,
     '~': bitwise_not,
+    ';': return_from_function,
 }
 for digit in '0123456789': run_time_dispatch[digit] = push_literal
 
