@@ -5,5 +5,7 @@ chmod 755 hello42
 ./hello42 || echo $?
 if ! ./tinyboot.py < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
-if ! ./tb1 < tinyboot1.tbf1 > tb2; then echo failed; exit 1; fi
-cmp tb1 tb2
+./tb1 || echo $?
+# not ready yet:
+#if ! ./tb1 < tinyboot1.tbf1 > tb2; then echo failed; exit 1; fi
+#cmp tb1 tb2
