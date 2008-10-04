@@ -18,8 +18,8 @@ D get it to copy its input into its output
   - ^
   D ;
   D :
-  - #
-  - b
+  D #
+  D b
   D v
   - *
   D ( space newline

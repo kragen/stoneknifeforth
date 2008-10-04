@@ -125,9 +125,11 @@ v B # 0 ( buffer for w )
 
 ( routine to dispatch a byte being compiled )
 : D 
-  d 40 = [ { G 41 - } ; ]     ( drop comments until right paren z)
+  d 40 = [ { G 41 - } ; ]     ( drop comments until right paren )
   d 32 = [ p ; ]              ( drop spaces )
   d 10 = [ p ; ]              ( drop newlines )
+  d 35 = [ p w 48 - n E ; ]   ( # writes the next number as data literally )
+  d 98 = [ p w 48 - n . ; ]   ( b does the same, but just as one byte )
   d 59 = [ p R 195 . ; ]      ( ; is R, then `ret` )
   d 33 = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
   d 64 = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
