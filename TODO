@@ -22,4 +22,5 @@ D get it to copy its input into its output
   - *
   D ( space newline
   - numeric literals
-  - function calls
+  D function calls
+- hey, what about initializing %ebp?
