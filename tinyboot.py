@@ -79,8 +79,8 @@ def tbfcompile():
             pass                 # ignore things from run-time for now
         else:
             excerpt_beginning = max(0, program_counter - 10)
-            assert False, '%r not defined at %r (%r)' % \
-                   (byte, program[excerpt_beginning:program_counter], run_time_dispatch)
+            assert False, '%r not defined at %r' % \
+                   (byte, program[excerpt_beginning:program_counter])
 
 ### Run-time actions.
 # Execution should pretty much stay inside of functions, and we
