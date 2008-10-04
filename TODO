@@ -11,11 +11,12 @@ D get it to copy its input into its output
   D [ ]
   D { }
   D @ !
-  - f s
+  - f 
+  D s
   D +
   D ~
   - <
-  - ^
+  - ^ to set the entry point
   D ;
   D :
   D #
