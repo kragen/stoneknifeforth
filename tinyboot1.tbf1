@@ -110,9 +110,10 @@ v B # 0 ( buffer for w )
 : & d F T + @ 1 = [ ( if it’s a subroutine...)
     R 232 . ( CALL instruction; now we have to compute the offset )
     H @ 4 + ( find address of next instruction )
-    x F A + @ - ( find offset to subroutine )
+    x F A + @ x - ( find offset to subroutine )
     E ( encode it )
     R ; ] ( okay, and otherwise, it’s a variable... )
+  80 . ( push %eax ) 184 . ( load immediate %eax )
   F A + @ E ;
 
 ( routine to dispatch a byte being compiled )
