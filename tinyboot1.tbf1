@@ -131,7 +131,7 @@ v B # 0 ( buffer for w )
     x F A + @ x - ( find offset to subroutine )
     E ( encode it )
     R ; ] ( okay, and otherwise, it’s a variable... )
-  F A + @ L ;
+  F A + @ h - o @ + L ;
 
 ( J: compile a forward conditional jump )
 : J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 117 . H @ 0 . ( jnz 0 ) ;
