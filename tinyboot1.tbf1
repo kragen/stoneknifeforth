@@ -103,17 +103,20 @@ v X # 0  v Y # 0  v Z # 0 ( temp vars )
 : O [ p 1 ; ] ; ( Boolean OR )       : > x < ; ( greater-than )
 
 ( routine to add a byte to the program being compiled )
-: . H @ s  H @ 1 + H ! ;
-: R 135 . 236 . ; ( xchg %ebp, %esp )
+: u H @ s  H @ 1 + H ! ;
+( R emits an `xchg %ebp, %esp` — but we buffer it to see if it’s canceled by 
+  another one before actually emitting it. U is the buffer, and % flushes it.
+  So . adds a byte to the program being compiled, after flushing this buffer. )
+v U # 0  : % U @ [ 135 u 236 u  0 U ! ] ;  : R U @ N U ! ;  : . % u ;
 
 v T * 1024 ( Table of Types of definitions: 1 for subroutine, 2 for data label )
 v A * 1024 ( table of Addresses of definitions )
 : F d + d + ; ( 4 *, for indexing these tables )
-: C d F T + 1 x !  H @ x F A + ! ; ( register a colon definition )
-: V d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
+: C % d F T + 1 x !  H @ x F A + ! ; ( register a colon definition )
+: V % d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
 v B # 0 ( buffer for w )
 : w { G B !  B @ 32 = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
-: E H @ ! H @ 4 + H ! ; ( store word on top of stack at H, praise non-aligned access )
+: E % H @ ! H @ 4 + H ! ; ( store word on top of stack at H, praise non-aligned access )
 : I d 48 <  x 57 >  O N ; ( isdigit )
 : L 80 . ( push %eax ) 184 . ( load immediate %eax ) E ; ( push a literal )
 : t x d F + d +  + ; ( for base-10 decoding: A B -> 10A + B )
@@ -138,7 +141,7 @@ v B # 0 ( buffer for w )
 ( 1 - is needed because the saved address is one byte inside the jnz 
   instruction, but the offset should be calculated from the beginning of the 
   next instruction )
-: P  d H @ x - 1 -  x s ;  
+: P  d % H @ x - 1 -  x s ;  
 
 ( implementation of <.  I hope this is < and not >. )
 : i 43 . 4 . 36 . ( sub [%esp], %eax )   88 . 88 . ( pop %eax twice ) 
