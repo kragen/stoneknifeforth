@@ -39,9 +39,13 @@ p — DROP
 x — SWAP
 = — an equality test
 > — a greater-than test
-. — add a byte to the program being compiled
 D — dispatch a byte being compiled
-R — compile the sequence `xchg %ebp, %esp`
+R — compile the sequence `xchg %ebp, %esp`, buffered by a peephole optimizer
+. — add a byte to the program being compiled, flushing the peephole buffer
+u — add a byte to the program being compiled, used to implement the peephole 
+    buffer
+U — the peephole buffer itself, a boolean storing whether there’s a pending 
+    `xchg %ebp, %esp`
 T — table of types of definitions
 A — table of addresses of definitions
 F — 4 *
