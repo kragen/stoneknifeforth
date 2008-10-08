@@ -28,16 +28,26 @@ rstack = []
 
 program_counter = 0
 
+def current_byte():
+    return program[program_counter]
+
 def eat_byte():
     global program_counter
+    current_byte = program[program_counter]
     program_counter += 1
+    return current_byte
+
+def peek_byte():
+    global program_counter
+    program_counter += 1
+    return program[program_counter]
 
 def eat_comment():
-    while program[program_counter] != ')': eat_byte()
-    eat_byte()
+    while peek_byte() != ')':
 
 def advance_past_whitespace():
-    while program[program_counter] in ' \n': eat_byte()
+    if current_byte() not in ' \n': return
+    while peek_byte() in ' \n':
 
 def push_dataspace_label(n):
     return lambda: stack.append(n)
@@ -45,8 +55,7 @@ def push_dataspace_label(n):
 def dataspace_label():
     "Define a label in data space."
     advance_past_whitespace()
-    name = program[program_counter]
-    eat_byte()
+    name = eat_byte()
     run_time_dispatch[name] = push_dataspace_label(len(memory))
 
 def call_function(n):
@@ -58,13 +67,12 @@ def call_function(n):
 
 def define_function():
     advance_past_whitespace()
-    name = program[program_counter]
-    eat_byte()
+    name = eat_byte()
     run_time_dispatch[name] = call_function(program_counter)
 
 def read_number():
     start = program_counter
-    while program[program_counter] in '0123456789': eat_byte()
+    while eat_byte() in '0123456789':
     return int(program[start:program_counter])
 
 def literal_byte():
@@ -123,8 +131,7 @@ compile_time_dispatch = {
 
 def tbfcompile():
     while program_counter < len(program):
-        byte = program[program_counter]
-        eat_byte()
+        byte = eat_byte()
         if byte in compile_time_dispatch:
             compile_time_dispatch[byte]()
         elif byte in run_time_dispatch:
@@ -232,9 +239,7 @@ def tbfrun():
     global program_counter
     program_counter = start_address
     while True:
-        byte = program[program_counter]
-        eat_byte()
-        run_time_dispatch[byte]()
+        run_time_dispatch[eat_byte()]()
 
 def main(infile):
     global program
