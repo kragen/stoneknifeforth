@@ -38,7 +38,9 @@ def eat_byte():
     return current_byte
 
 def eat_comment():
+    comment_start = program_counter
     while eat_byte() != ')': pass
+    jump_targets[comment_start] = program_counter
 
 def advance_past_whitespace():
     while current_byte() in ' \n': eat_byte()
@@ -196,19 +198,21 @@ def read_byte():
     else:
         stack.append(ord(byte))
 
-def conditional():
-    if stack.pop(): return
+def jump():
     global program_counter
     program_counter = jump_targets[program_counter]
+
+def conditional():
+    if stack.pop(): return
+    jump()
 
 def loop():
     if not stack.pop(): return
-    global program_counter
-    program_counter = jump_targets[program_counter]
+    jump()
 
 
 run_time_dispatch = {    
-    '(': eat_comment,
+    '(': jump,
     'W': write_out,
     'G': read_byte,
     'Q': quit,
