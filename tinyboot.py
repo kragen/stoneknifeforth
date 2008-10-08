@@ -37,17 +37,11 @@ def eat_byte():
     program_counter += 1
     return current_byte
 
-def peek_byte():
-    global program_counter
-    program_counter += 1
-    return program[program_counter]
-
 def eat_comment():
-    while peek_byte() != ')':
+    while eat_byte() != ')': pass
 
 def advance_past_whitespace():
-    if current_byte() not in ' \n': return
-    while peek_byte() in ' \n':
+    while current_byte() in ' \n': eat_byte()
 
 def push_dataspace_label(n):
     return lambda: stack.append(n)
@@ -72,7 +66,7 @@ def define_function():
 
 def read_number():
     start = program_counter
-    while eat_byte() in '0123456789':
+    while eat_byte() in '0123456789': pass
     return int(program[start:program_counter])
 
 def literal_byte():
