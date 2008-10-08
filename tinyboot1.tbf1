@@ -138,7 +138,7 @@ v B # 0 ( buffer for w )
   F A + @ h - o @ + L ;
 
 ( J: compile a forward conditional jump )
-: J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 117 . H @ 0 . ( jnz 0 ) ;
+: J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 116 . H @ 0 . ( jz 0 ) ;
 ( j: compile a backward conditional jump )
 : j 133 . 192 . 88 . 117 . H @ - 1 - . ( jnz whatever ) ;
 ( P: resolve a forward conditional jump by backpatching )
