@@ -2,6 +2,7 @@
 "Remove comments and most extra whitespace from a tbf1 program."
 import sys
 wsp = comment = newline = False
+firstline = True
 while True:
     byte = sys.stdin.read(1)
     if not byte: break
@@ -11,8 +12,9 @@ while True:
         if byte == '\n': newline = True
         elif byte == ' ': wsp = True
         else:
-            if newline: sys.stdout.write('\n')
+            if newline:
+                if not firstline: sys.stdout.write('\n')
             elif wsp: sys.stdout.write(' ')
             sys.stdout.write(byte)
-            wsp = newline = False
+            wsp = newline = firstline = False
 sys.stdout.write('\n')
