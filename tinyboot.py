@@ -140,7 +140,6 @@ def tbfcompile():
 ### Run-time actions.
 # Execution should pretty much stay inside of functions, and we
 # shouldn't run into any compile-time actions there, right?
-# Except maybe comments.
 
 def write_out():
     "Given an address and a count, write out some memory to stdout."
