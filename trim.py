@@ -1,17 +1,22 @@
 #!/usr/bin/python
 "Remove comments and most extra whitespace from a tbf1 program."
 import sys
+deindent = ('-i' in sys.argv)
 wsp = comment = newline = False
-firstline = True
+firstline = startline = True
 while True:
     byte = sys.stdin.read(1)
     if not byte: break
     elif byte == '(': comment = True
     elif byte == ')': comment = False
     elif not comment:
-        if byte == '\n': newline = True
-        elif byte == ' ': wsp = True
+        if byte == '\n':
+            startline = True
+            newline = True
+        elif (deindent or not startline) and byte == ' ':
+            wsp = True
         else:
+            startline = (byte == ' ')
             if newline:
                 if not firstline: sys.stdout.write('\n')
             elif wsp: sys.stdout.write(' ')
