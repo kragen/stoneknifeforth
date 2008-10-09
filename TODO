@@ -35,6 +35,9 @@ past the end of itself to generate its output.
 
 Then simplifications:
 - replace + and ~ with -
+- factor out w 48 - n
+- factor out H @ + H !
+- factor out h - o @ +
 
 And cleanups:
 - permit multi-character tokens
