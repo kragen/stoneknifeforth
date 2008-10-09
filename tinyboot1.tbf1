@@ -14,6 +14,7 @@ space, newline — ignored
 : — defines a function
 
 Run-time primitives:
+G — gets a byte from stdin
 W — given an address and size on the stack, writes the specified number of 
     bytes to stdout
 Q — exits the program with a return code of 0
@@ -23,6 +24,9 @@ Q — exits the program with a return code of 0
 ~ — bitwise-negates a word
 ; — returns from a function
 < — a less-than test
+m — not used directly since the interpreter doesn't implement it,
+    this invokes an arbitrary system call with up to three arguments.
+    The compiler's implementations of G, W, and Q use this.
 
 Defined in this file, all necessarily run-time:
 h — the ELF header
@@ -63,6 +67,7 @@ n — parse a number from input and push it on the compile-time stack
 J — compile a forward conditional jump [
 P — resolve a forward conditional jump ]
 j — compile a backwards negative conditional jump }
+M — the location in the compiler's memory for the system call routine
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -89,9 +94,21 @@ v h ( ELF header, Elf32_Ehdr )
      ( p_flags:) # 7        ( p_align:) # 4096
 
 v `
+( some simple code that doesn't do anything useful )
 ( mov bl, 42) b 179 b 42
    ( inc eax) b 64
   ( int 0x80) b 205 b 128
+
+v M  ( system call routine; called in program with lowercase `m`)
+  ( syscall number already in %eax )
+( xchg %ebp, %esp) b 135 b 236
+       ( pop %ebx) b 91
+       ( pop %ecx) b 89
+       ( pop %edx) b 90
+       ( int 0x80) b 205 b 128
+( xchg %ebp, %esp) b 135 b 236
+            ( ret) b 195
+
 v $ * 4096 ( 4096 bytes should be plenty for ANY program! ☺ )
 ( this space for compiling the program eventually has to move to the end of 
   everything, so it can expand.  something like : $ h 8192 + ; )
@@ -179,13 +196,20 @@ v B # 0 ( buffer for w )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
   d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
+  d 81 = [ p 0 L 0 L 0 L      ( Q calls _exit(0, 0, 0)
+             1 L 109 & ; ]    ( system call #1 (__NR_exit) ( syscall is `m` )
+  d 87 = [ p 1 L 4 L 109 & ; ] ( W calls write(1, x, y) ( syscall #4 )
+  d 94 = [ p H @ h - o @ + e ! ( ^ sets the entry point e, a virtual address )
+        137 . 229 .           ( mov %esp, %ebp to initialize %ebp to %esp-2048 )
+        129 . 237 . 0 . 8 . 0 . 0 . ; ] ( sub $2048, %ebp )
   . ;                     ( default is to copy to output )
 : K ( routine to "kompile" input to output )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
     D 1 }
 
-^ ` h - o @ + e ! ( set entry point correctly wrt origin )
+^ 
+M H ! 109 C  ( register `m` routine for system calls using dummy `H` )
 $ H ! ( initialize H )
-K ( copy input into output )
+K ( compile input into output )
 H @  h -  S ! ( subtract h from H to get size of whole program )
 h S @ W Q

@@ -40,3 +40,6 @@ jump:   test %eax, %eax
 bar:    nop
 rshift: pop %ecx
         sar %cl, %eax
+init:   mov %esp, %ebp
+        sub $2048, %ebp
+        

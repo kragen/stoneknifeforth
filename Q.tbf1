@@ -1,0 +1,2 @@
+( program that just quits, in tbf1 tinybootforth )
+^ Q
