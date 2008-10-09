@@ -16,7 +16,7 @@ D get it to copy its input into its output
   D +
   D ~
   D < (done I hope)
-  - ^ to set the entry point
+  D ^ to set the entry point
   D ;
   D :
   D #
@@ -26,5 +26,5 @@ D get it to copy its input into its output
   D ( space newline
   D numeric literals
   D function calls
-  - G W Q
-- hey, what about initializing %ebp?
+  D G W Q
+D hey, what about initializing %ebp?
