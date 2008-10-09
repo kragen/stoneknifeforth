@@ -215,7 +215,7 @@ $ H ! ( initialize H )
 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
 71 C R
 92 D 1 L 0 L 3 L 109 D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
-0 L 60 D 91 D ( 0 < [ → if it’s less than 0  XXX should be < 1)
+1 L 60 D 91 D ( 1 < [ → if it’s less than 1 )
   88 . 0 1 - L 59 D  ( then pop %eax and return -1 )
 93 D ( ] → otherwise, )
 92 D ( get the address of \ )
