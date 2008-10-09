@@ -1,5 +1,6 @@
 #!/usr/bin/python
 "Remove comments and most extra whitespace from a tbf1 program."
+# Wow this program has gotten ugly.
 import sys
 deindent = ('-i' in sys.argv)
 wsp = comment = newline = False
