@@ -68,6 +68,96 @@ J — compile a forward conditional jump [
 P — resolve a forward conditional jump ]
 j — compile a backwards negative conditional jump }
 M — the location in the compiler's memory for the system call routine
+
+Directory of magic numbers used, other than 0 and 1:
+2 — as e_type, means ET_EXEC, an executable file;
+    in the T table, means that a user-defined word is a “variable”
+3 — as e_machine, means EM_386, Intel 80386;
+    the system call number of the `read` system call
+4 — the size of a 32-bit word;
+    second byte of `sub [%esp], %eax`;
+    the system call number of the `write` system call
+7 — in p_flags, means PF_R | PF_W | PF_X, making the program memory readable, 
+    writable, and executable; 
+    in random bytes, is the pop %es instruction, which is used to help
+    disassemblers resync with the instruction stream
+8 — second byte of `movb %cl, [%eax]`;
+    2048 / 256
+10 — '\n' the ASCII linefeed or newline character
+15 — 0F extended opcode prefix byte, used to introduce `setle`, `movsbl`, 
+     and `movzbl` instructions, as well as others not used here.
+32 — the size of the ELF program header;
+     ' ' ASCII space character
+33 — '!' ASCII exclamation mark character
+35 — '#' ASCII number sign character
+36 — third byte of `sub [%esp], %eax`
+40 — the size of any ELF segment headers that might exist;
+     '(' ASCII left parenthesis
+41 — ASCII right parenthesis
+42 — '*' ASCII asterisk
+43 — first byte of `sub [%esp], %eax`;
+     '+' ASCII plus
+48 — '0' ASCII zero
+52 — the size of the ELF header
+57 — '9' ASCII nine
+58 — ':' ASCII colon
+59 — ';' ASCII semicolon
+60 — '<' ASCII less-than
+64 — '@' ASCII at-sign
+69 — 'E' ASCII uppercase E
+70 — 'F' ASCII uppercase F
+71 — 'G' ASCII uppercase G
+76 — 'L' ASCII uppercase L
+80 — `push %eax`
+81 — 'Q' ASCII uppercase Q
+87 — 'W' ASCII uppercase W
+88 — `pop %eax`
+89 — `pop %ecx`
+90 — `pop %edx`
+91 — `pop %ebx`;
+     '[' ASCII left square bracket
+92 — '\' ASCII backslash
+93 — ']' ASCII right square bracket
+98 — 'b' ASCII lowercase B
+109 — 'm' ASCII lowercase M
+115 — 's' ASCII lowercase S
+116 — `jz` instruction, one-byte immediate PC-relative destination
+117 — `jnz` instruction, likewise
+118 — 'v' ASCII lowercase V
+123 — '{' ASCII left curly brace
+125 — '}' ASCII right curly brace
+126 — '~' ASCII tilde
+127 — the first byte of an ELF executable
+128 — the interrupt number Linux uses for system calls: 0x80
+129 — first byte of `sub $xxx, %ebp`
+133 — first byte of `test %eax, %eax`
+135 — first byte of `xchg %ebp, %esp`
+136 — first byte of `movb %cl, [%eax]`
+137 — first byte of `mov %esp, %ebp`
+139 — first byte of `mov [%eax], %eax`, followed by 0
+143 — first byte of `pop [%eax]`, followed by 0
+158 — second byte of `setle %al`
+184 — `mov $xxx, %eax` — load immediate %eax
+192 — second byte of `test %eax, %eax`;
+      third byte of `setle %al`;
+      third byte of `movsbl %al, %eax`
+195 — `ret` instruction
+200 — second byte of `dec %al` and `add %ecx, %eax`
+205 — `int` interrupt instruction
+208 — second byte of `not %eax`
+229 — second byte of `mov %esp, %ebp`
+232 — `call` instruction opcode, 4-byte immediate PC-relative destination
+236 — second byte of `xchg %ebp, %esp`
+237 — second byte of `sub $xxx, %ebp`
+247 — first byte of `not %eax`
+254 — first byte of `dec %al`
+1024 — a table size in bytes: 256 entries of 4 bytes each
+4096 — the program runs with its origin at 4096, 0x1000, because that still 
+       leaves hex addresses easy to type and read, while leaving it likely 
+       that null pointer references will crash the program rather than making
+       mysterious bugs.  Also there’s a buffer of this size, which will go 
+       away soon.
+655360 — the total memory space allocated for the program
 )
 
 v h ( ELF header, Elf32_Ehdr )
@@ -204,7 +294,7 @@ v B # 0 ( buffer for w )
            88 . ; ]           ( pop %eax to discard result )
   d 94 = [ p H @ h - o @ + e ! ( ^ sets the entry point e, a virtual address )
         137 . 229 .           ( mov %esp, %ebp to initialize %ebp to %esp-2048 )
-        129 . 237 . 0 . 8 . 0 . 0 . ; ] ( sub $2048, %ebp )
+        129 . 237 . 0 . 8 . 0 . 0 . ; ] ( sub $2048, %ebp XXX use 2048 E? )
   . ;                     ( default is to copy to output )
 : K ( routine to "kompile" input to output )
   { G d 0 1 - = [ p ; ] ( return if char is -1 )
@@ -222,7 +312,7 @@ $ H ! ( initialize H )
   88 . 0 1 - L 59 D  ( then pop %eax and return -1 )
 93 D ( ] → otherwise, )
 92 D ( get the address of \ )
-15 . 182 . 0 . ( and fetch a byte from it: movzbl [%eax], %eax )
+15 . 182 . 0 . ( and fetch a byte from it: `movzbl [%eax], %eax` )
 59 D ( and return! )
 
 K ( compile input into output )

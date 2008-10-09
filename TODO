@@ -42,3 +42,4 @@ Then simplifications:
 And cleanups:
 - permit multi-character tokens
 - update comment at the top
+- add a way to include ASCII characters by example instead of numeric value
