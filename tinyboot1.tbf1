@@ -102,9 +102,11 @@ v `
 v M  ( system call routine; called in program with lowercase `m`)
   ( syscall number already in %eax )
 ( xchg %ebp, %esp) b 135 b 236
+( this really weird order is basically a special case for write(2)
+( first we pop the first argument, then the third, then the second)
        ( pop %ebx) b 91
-       ( pop %ecx) b 89
        ( pop %edx) b 90
+       ( pop %ecx) b 89
        ( int 0x80) b 205 b 128
 ( xchg %ebp, %esp) b 135 b 236
             ( ret) b 195

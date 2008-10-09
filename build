@@ -3,9 +3,17 @@ set -ve
 if ! ./tinyboot.py hello42.tbf1 > hello42; then cat hello42; exit 1; fi
 chmod 755 hello42
 ./hello42 || echo $?
+
+./tinyboot.py Q.tbf1
 if ! ./tinyboot.py tinyboot1.tbf1 < Q.tbf1 > Q; then cat Q; exit 1; fi
 chmod 755 Q
 strace ./Q
+
+./tinyboot.py hi.tbf1
+if ! ./tinyboot.py tinyboot1.tbf1 < hi.tbf1 > hi; then cat hi; exit 1; fi
+chmod 755 hi
+strace ./hi
+
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
 ./tb1 || echo $?

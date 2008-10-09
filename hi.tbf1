@@ -1,0 +1,3 @@
+( simple program to print out "hi" )
+v h b 104 b 105 b 10 
+^ h 3 W Q
