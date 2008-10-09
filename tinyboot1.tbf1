@@ -164,8 +164,8 @@ v B # 0 ( buffer for w )
   next instruction )
 : P  d % H @ x - 1 -  x s ;  
 
-( implementation of <.  I hope this is < and not >. )
-: i 43 . 4 . 36 . ( sub [%esp], %eax )   88 . 88 . ( pop %eax twice ) 
+( implementation of < )
+: i 43 . 4 . 36 . ( sub [%esp], %eax )   88 . ( pop %eax ) 
     15 . 158 . 192 . ( setle %al )       254 . 200 . ( dec %al )
     15 . 190 . 192 . ( movsbl %al, %eax ) ;
 
@@ -184,7 +184,7 @@ v B # 0 ( buffer for w )
   d 91 = [ p J ; ]            ( [ compiles a conditional jump, pushing an 
                                   address for backpatching )
   d 93 = [ p P ; ]            ( ] backpatches the address on the compile stack )
-  d 123 = [ p H @ ; ]         ( { merely pushes an address to jump back to )
+  d 123 = [ p % H @ ; ]       ( { merely pushes an address to jump back to )
   d 125 = [ p j ; ]           ( } compiles a conditional jump to that address )
   d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
                                   variable label )
@@ -215,7 +215,7 @@ $ H ! ( initialize H )
 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
 71 C R
 92 D 1 L 0 L 3 L 109 D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
-0 L 60 D 91 D ( 0 < [ → if it’s less than 0 )
+0 L 60 D 91 D ( 0 < [ → if it’s less than 0  XXX should be < 1)
   88 . 0 1 - L 59 D  ( then pop %eax and return -1 )
 93 D ( ] → otherwise, )
 92 D ( get the address of \ )

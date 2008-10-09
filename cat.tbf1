@@ -1,0 +1,6 @@
+( copies input to output )
+v _ b 0  v X # 0  
+b 7 b 7 b 7 b 7 b 7 ( for the sake of disassemblers )
+: d X ! X @ X @ ;
+: C { G  d 0 < [ X ! ; ]  _ s  _ 1 W  1 }
+^ C Q

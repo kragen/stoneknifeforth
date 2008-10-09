@@ -19,6 +19,14 @@ if ! ./tinyboot.py tinyboot1.tbf1 < cat1.tbf1 > cat1; then cat cat1; exit 1; fi
 chmod 755 cat1
 echo x | strace ./cat1
 
+if ! ./tinyboot.py cat.tbf1 < cat.tbf1 > tmp.out ; then cat tmp.out; exit 1; fi
+cmp cat.tbf1 tmp.out
+if ! ./tinyboot.py tinyboot1.tbf1 < cat.tbf1 > cat ; then cat cat; exit 1; fi
+chmod 755 cat
+./cat < cat.tbf1 > tmp.out
+cmp cat.tbf1 tmp.out
+rm tmp.out
+
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
 : it fails at this point still:

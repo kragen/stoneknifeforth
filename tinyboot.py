@@ -161,7 +161,10 @@ def push_literal():
     stack.append(read_number())
 
 def decode(bytes):
-    return bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24
+    rv = bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24
+    if rv > 0x7fffFfff:
+        rv -= 0x100000000
+    return rv
 
 def fetch():
     addr = stack.pop()
