@@ -25,6 +25,8 @@ if ! ./tinyboot.py tinyboot1.tbf1 < cat.tbf1 > cat ; then cat cat; exit 1; fi
 chmod 755 cat
 ./cat < cat.tbf1 > tmp.out
 cmp cat.tbf1 tmp.out
+./cat < tinyboot1.tbf1 > tmp.out # larger files sometimes show problems
+cmp tinyboot1.tbf1 tmp.out
 rm tmp.out
 
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
