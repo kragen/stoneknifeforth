@@ -23,6 +23,7 @@ lessthan:
         sub (%esp), %eax
         pop %eax
         setge %al
+        setle %al
         dec %al
         movsbl %al, %eax
 not:    not %eax
@@ -42,4 +43,17 @@ rshift: pop %ecx
         sar %cl, %eax
 init:   mov %esp, %ebp
         sub $2048, %ebp
-        
+getchar:
+	## first load the buffer address, then
+        mov %eax, %ecx
+	mov $3, %eax
+	xor %ebx, %ebx
+        mov $1, %edx
+        int $0x80
+        test %eax, %eax
+        jnz okay
+        mov $-1, %eax
+        ret
+okay:   ## load buffer address again, then
+        ## fetch byte
+        movzbl (%eax), %eax

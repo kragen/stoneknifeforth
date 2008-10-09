@@ -1,0 +1,5 @@
+( read one char from stdin and write it to stdout )
+v n b 10
+v B b 0
+: x 1 2 3 4 5 ;
+^ G B s  B 1 W  n 1 W  Q

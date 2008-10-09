@@ -14,9 +14,15 @@ if ! ./tinyboot.py tinyboot1.tbf1 < hi.tbf1 > hi; then cat hi; exit 1; fi
 chmod 755 hi
 strace ./hi
 
+echo x | ./tinyboot.py cat1.tbf1
+if ! ./tinyboot.py tinyboot1.tbf1 < cat1.tbf1 > cat1; then cat cat1; exit 1; fi
+chmod 755 cat1
+echo x | strace ./cat1
+
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
-./tb1 || echo $?
+: it fails at this point still:
+./tb1 < tinyboot1.tbf1 > tb2 || echo $?
 # not ready yet:
 #if ! ./tb1 < tinyboot1.tbf1 > tb2; then echo failed; exit 1; fi
 #cmp tb1 tb2

@@ -94,11 +94,7 @@ v h ( ELF header, Elf32_Ehdr )
      ( p_flags:) # 7        ( p_align:) # 4096
 
 v `
-( some simple code that doesn't do anything useful )
-( mov bl, 42) b 179 b 42
-   ( inc eax) b 64
-  ( int 0x80) b 205 b 128
-
+b 7 b 7 b 7 b 7 b 7 ( to help disassemblers resync )
 v M  ( system call routine; called in program with lowercase `m`)
   ( syscall number already in %eax )
 ( xchg %ebp, %esp) b 135 b 236
@@ -110,6 +106,8 @@ v M  ( system call routine; called in program with lowercase `m`)
        ( int 0x80) b 205 b 128
 ( xchg %ebp, %esp) b 135 b 236
             ( ret) b 195
+v / b 0 ( a one-byte read buffer for the program being compiled )
+
 
 v $ * 4096 ( 4096 bytes should be plenty for ANY program! ☺ )
 ( this space for compiling the program eventually has to move to the end of 
@@ -168,7 +166,7 @@ v B # 0 ( buffer for w )
 
 ( implementation of <.  I hope this is < and not >. )
 : i 43 . 4 . 36 . ( sub [%esp], %eax )   88 . 88 . ( pop %eax twice ) 
-    15 . 157 . 192 . ( setge %al )       254 . 200 . ( dec %al )
+    15 . 158 . 192 . ( setle %al )       254 . 200 . ( dec %al )
     15 . 190 . 192 . ( movsbl %al, %eax ) ;
 
 ( routine to dispatch a byte being compiled )
@@ -211,7 +209,19 @@ v B # 0 ( buffer for w )
 
 ^ 
 M H ! 109 C  ( register `m` routine for system calls using dummy `H` )
+/ H ! 92 V   ( register `\` variable )
 $ H ! ( initialize H )
+( routine for `G` — wow, this is awful! compiles to about 80 bytes )
+7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
+71 C R
+92 D 1 L 0 L 3 L 109 D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
+0 L 60 D 91 D ( 0 < [ → if it’s less than 0 )
+  88 . 0 1 - L 59 D  ( then pop %eax and return -1 )
+93 D ( ] → otherwise, )
+92 D ( get the address of \ )
+15 . 182 . 0 . ( and fetch a byte from it: movzbl [%eax], %eax )
+59 D ( and return! )
+
 K ( compile input into output )
 H @  h -  S ! ( subtract h from H to get size of whole program )
 h S @ W Q
