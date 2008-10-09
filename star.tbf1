@@ -1,0 +1,10 @@
+( program to test * )
+( reads eight bytes into a buffer and writes them out all at once )
+b 33  ( !'s on the ends to make sure we have the buffer right )
+v B * 8
+b 33
+v H # 0
+v N b 10
+: g G H @ s  H @ 1 + H ! ;
+^ B H ! g g g g  g g g g
+B 8 W  N 1 W  Q

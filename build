@@ -29,6 +29,11 @@ cmp cat.tbf1 tmp.out
 cmp tinyboot1.tbf1 tmp.out
 rm tmp.out
 
+echo passamaquoddy | ./tinyboot.py star.tbf1
+if ! ./tinyboot.py tinyboot1.tbf1 < star.tbf1 > star ; then cat star; exit 1; fi
+chmod 755 star
+echo passamaquoddy | strace ./star
+
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
 : it fails at this point still:

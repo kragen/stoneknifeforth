@@ -196,6 +196,8 @@ v B # 0 ( buffer for w )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
   d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
+  d 42 = [ p w 48 - n         ( * reads a number )
+           H @ + H ! ; ]      ( and increments H by that number )
   d 81 = [ p 0 L 0 L 0 L      ( Q calls _exit(0, 0, 0)
              1 L 109 & ; ]    ( system call #1 (__NR_exit) ( syscall is `m` )
   d 87 = [ p 1 L 4 L 109 &    ( W calls write(1, x, y) ( syscall #4 ) 
