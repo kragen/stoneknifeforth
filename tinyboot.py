@@ -170,12 +170,20 @@ def fetch():
     addr = stack.pop()
     stack.append(decode(memory[addr:addr+4]))
 
+def extend_memory(addr):
+    # Addresses > 100k are probably just a bug; it’s not practical to
+    # run large programs with this interpreter anyway.
+    if len(memory) < addr + 1 and addr < 100000:
+        memory.extend([0] * (addr + 1 - len(memory)))
+
 def store():
     addr = stack.pop()
+    extend_memory(addr)
     memory[addr:addr+4] = as_bytes(stack.pop())
 
 def store_byte():
     addr = stack.pop()
+    extend_memory(addr)
     memory[addr] = stack.pop() & 255
 
 def bitwise_not():

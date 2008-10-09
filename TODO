@@ -28,6 +28,14 @@ D get it to copy its input into its output
   D function calls
   D G W Q
 D hey, what about initializing %ebp?
+D fix interpreter to allow past-the-end access
 
 Okay, the only thing left to do is to make the compiler use a space
 past the end of itself to generate its output.
+
+Then simplifications:
+- replace + and ~ with -
+
+And cleanups:
+- permit multi-character tokens
+- update comment at the top
