@@ -29,20 +29,8 @@ D get it to copy its input into its output
   D G W Q
 D hey, what about initializing %ebp?
 D fix interpreter to allow past-the-end access
-
-Okay, the only thing left to do is to make the compiler use a space
-past the end of itself to generate its output.
-
-I can either:
-A- write out the headers as a separate write call
-B- reserve space for the headers in the work area, then copy them there
-   before writing them out (I have to modify them after the
-   compilation, because they include a length field)
-C- ???
-
-Moving the work area is fairly simple; just move H to somewhere else,
-then have a way of calculating where that was.
-
+D fix compiler to compile itself past the end of itself
+D fix bug where comments left crap on the compile-time stack
 
 Then simplifications:
 - replace + and ~ with -

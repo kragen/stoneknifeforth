@@ -272,7 +272,7 @@ v B # 0 ( buffer for w )
 
 ( routine to dispatch a byte being compiled )
 : D 
-  d 40 = [ { G 41 - } ; ]     ( drop comments until right paren )
+  d 40 = [ p { G 41 - } ; ]   ( drop comments until right paren )
   d 32 = [ p ; ]              ( drop spaces )
   d 10 = [ p ; ]              ( drop newlines )
   d 35 = [ p w 48 - n E ; ]   ( # writes the next number as data literally )
