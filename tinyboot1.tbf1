@@ -12,6 +12,12 @@ b — compiles a literal byte, numerically, into data space.
     is just definitions]
 space, newline — ignored
 : — defines a function
+[ — begins a conditional block, which consumes the value on top of the stack
+    and is skipped if that value is zero
+] — ends a conditional block, matching the latest unmatched [
+{ — begins a loop
+} — ends a loop — consumes the value on top of the stack and loops back to 
+    the matching { if it is nonzero
 
 Run-time primitives:
 G — gets a byte from stdin
@@ -20,13 +26,14 @@ W — given an address and size on the stack, writes the specified number of
 Q — exits the program with a return code of 0
 + — adds two numbers
 @ — fetches a word from memory
-! — stores to a word in memory
+! — stores to a word in memory whose address is on top of the stack
 ~ — bitwise-negates a word
 ; — returns from a function
 < — a less-than test
 m — not used directly since the interpreter doesn't implement it,
     this invokes an arbitrary system call with up to three arguments.
     The compiler's implementations of G, W, and Q use this.
+s — stores to a byte in memory whose address is on top of the stack
 
 Defined in this file, all necessarily run-time:
 h — the ELF header
