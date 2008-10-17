@@ -48,11 +48,15 @@ def advance_past_whitespace():
 def push_dataspace_label(n):
     return lambda: stack.append(n)
 
+def define(name, action):
+    assert name not in run_time_dispatch, name
+    run_time_dispatch[name] = action
+
 def dataspace_label():
     "Define a label in data space."
     advance_past_whitespace()
     name = eat_byte()
-    run_time_dispatch[name] = push_dataspace_label(len(memory))
+    define(name, push_dataspace_label(len(memory)))
 
 def call_function(n):
     def rv():
@@ -64,7 +68,7 @@ def call_function(n):
 def define_function():
     advance_past_whitespace()
     name = eat_byte()
-    run_time_dispatch[name] = call_function(program_counter)
+    define(name, call_function(program_counter))
 
 def read_number():
     start = program_counter
