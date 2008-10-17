@@ -36,8 +36,11 @@ echo passamaquoddy | strace ./star
 
 if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
 chmod 755 tb1
-: it fails at this point still:
-./tb1 < tinyboot1.tbf1 > tb2 || echo $?
-# not ready yet:
-#if ! ./tb1 < tinyboot1.tbf1 > tb2; then echo failed; exit 1; fi
-#cmp tb1 tb2
+time ./tb1 < tinyboot1.tbf1 > tb2
+cmp tb1 tb2
+chmod 755 tb2
+
+./trim.py -i < tinyboot1.tbf1 > trimmed.tbf1
+time ./tb1 < trimmed.tbf1 > trimmed
+cmp tb2 trimmed
+wc trimmed.tbf1
