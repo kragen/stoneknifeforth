@@ -1,0 +1,26 @@
+In John C. Reynolds's paper, “[Definitional Interpreters
+Revisited](http://www.brics.dk/~hosc/local/HOSC-11-4-pp355-361.pdf)”,
+Higher-Order and Symbolic Computation, 11, 355–361 (1998), he says:
+
+> In the fourth and third paragraphs before the end of Section 5, I should have emphasized
+> the fact that a metacircular interpreter is not really a deﬁnition, since it is trivial when
+> the deﬁning language is understood, and otherwise it is ambiguous. In particular,
+> Interpreters I and II say nothing about order of application, while Interpreters I and III
+> say little about higher-order functions.
+> Jim Morris put the matter more strongly [5]:
+> 
+> >  The activity of deﬁning features in terms of themselves is highly suspect,
+> >  especially when they are as subtle as functional objects. It is a fad that should
+> >  be debunked, in my opinion. A real signiﬁcance of [a self-deﬁned] interpreter
+> >  . . . is that it displays a simple universal function for the language in question.
+> 
+> On the other hand, I clearly remember that John McCarthy’s deﬁnition of LISP [1DI],
+> which is a deﬁnitional interpreter in the style of II, was a great help when I ﬁrst learned
+> that language. But it was not the sole support of my understanding.
+
+Other things that metacircular interpreters gloss over include garbage
+collection and strictness.
+
+Metacircular compilers still suffer the problem that it is ambiguous
+when the defining language isn’t understood.  But they don’t gloss
+over quite as much.
