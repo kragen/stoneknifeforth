@@ -52,12 +52,12 @@ There are straightforward changes to reduce it to below 4096 bytes,
 but they will make the compiler more complicated, not simpler.  The
 tables T and A should be moved past the end of the executable text,
 and some of the most-referenced routines should be open-coded, which
-should also speed it up.  Here are the routines that are called in
-more than 10 places:
+should also speed it up.  Here are the routines that were called in
+more than 10 places some time ago:
 
      11 0x169  xchg
      13 0xc20  Literal
-     22 0x190  -  (note that + is only used in 25 places)
+     22 0x190  -  (now replaced by +, which is only used in 25 places)
      25 0x15b  pop
      26 0x1bc  =
      35 0x13d  dup
