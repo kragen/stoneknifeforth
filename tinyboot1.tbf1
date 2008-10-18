@@ -170,7 +170,7 @@ v h ( ELF header, Elf32_Ehdr )
      ( p_flags:) # 7        ( p_align:) # 4096
 
 v `
-b 7 b 7 b 7 b 7 b 7 ( to help disassemblers resync )
+( b 7 b 7 b 7 b 7 b 7 ( to help disassemblers resync )
 v M  ( system call routine; called in program with lowercase `m`)
   ( syscall number already in %eax )
 ( xchg %ebp, %esp) b 135 b 236
@@ -301,8 +301,8 @@ M $ Z - + H ! 'm C  ( register `m` routine for system calls using dummy `H` )
 / $ Z - + H ! '\ V   ( register `\` variable )
 $ H ! ( initialize H )
 ( routine for `G` — wow, this is awful! compiles to about 80 bytes )
-7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
-'G C R
+( 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
+'G C R ( define `G` )
 '\ D 1 L 0 L 3 L 'm D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
 1 L '< D '[ D ( 1 < [ → if it’s less than 1 )
   88 . 0 1 - L '; D  ( then pop %eax and return -1 )

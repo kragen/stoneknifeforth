@@ -24,7 +24,7 @@ On my 700MHz laptop, measuring wall-clock time:
 
 So this is a programming language implementation that can recompile
 itself from source twice per 24fps movie frame.  The entire “trimmed”
-source code is 1942 bytes, which is less than half the size of the
+source code is 1902 bytes, which is less than half the size of the
 nearest comparable project that I’m aware of, `otccelf`, which is 4748
 bytes.
 
@@ -40,8 +40,8 @@ x86 quirks:
 (It would be fairly easy to make a tiny “compiler” if the source
 language were, say, x86 machine code.)
 
-The output executable is 4153 bytes, containing about 1400
-instructions.  `valgrind` reports that it takes 1,831,844 instructions
+The output executable is 4063 bytes, containing about 1400
+instructions.  `valgrind` reports that it takes 1,813,395 instructions
 to compile itself.  (So you would think that it could compile itself
 in 2.6 ms.  The long runtimes are a result of reading its input one
 byte at at time.)
@@ -49,7 +49,7 @@ byte at at time.)
 Reducing Executable Size
 ------------------------
 
-There are straightforward changes to reduce it to below 4096 bytes,
+There are straightforward changes to reduce the executable size further,
 but they will make the compiler more complicated, not simpler.  Some
 of the most-referenced routines should be open-coded, which should
 also speed it up.  Here are the routines that were called in more than
@@ -231,7 +231,7 @@ lot smaller than Ur-Scheme's 90k and 1600 lines.  (Although there are
 another 181 lines of Python for the bootstrap interpreter.)
 
 It’s possible to imagine writing and debugging 114 lines of code in a
-day, or even 300.  It’s still maybe a bit optimistic to think I could
+day, or even 300 lines.  It’s still maybe a bit optimistic to think I could
 do that in a day, so maybe I need to find a way to increase
 incrementality further.
 
