@@ -214,8 +214,10 @@ v X # 0  v Y # 0  ( temp vars )
   So . adds a byte to the program being compiled, after flushing this buffer. )
 v U # 0  : % U @ [ 135 u 236 u  0 U ! ] ;  : R U @ N U ! ;  : . % u ;
 
-v T * 1024 ( Table of Types of definitions: 1 for subroutine, 2 for data label )
-v A * 1024 ( table of Addresses of definitions )
+( T and A are two 1024-byte tables; since they should start out as zeroes,
+  we put them past the end of the program instead of allocating space for them )
+: T h 6144 + ; ( Table of Types of definitions: 1 for subroutine, 2 for data label )
+: A h 7168 + ; ( table of Addresses of definitions )
 : F d + d + ; ( 4 *, for indexing these tables )
 : C % d F T + 1 x !  H @ x F A + ! ; ( register a colon definition )
 : V % d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
