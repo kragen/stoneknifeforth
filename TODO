@@ -33,12 +33,12 @@ D fix compiler to compile itself past the end of itself
 D fix bug where comments left crap on the compile-time stack
 
 Then simplifications:
-- replace + and ~ with -
-- factor out w 48 - n
+D replace + and ~ with -
+D factor out w 48 - n (okay, 48 - n is now n, but we still have w n and n)
 - factor out H @ + H !
-- factor out h - o @ +
+D factor out h - o @ + (had to be done to compile past the end of itself)
 
 And cleanups:
 - permit multi-character tokens
-- update comment at the top
-- add a way to include ASCII characters by example instead of numeric value
+D update comment at the top
+D add a way to include ASCII characters by example instead of numeric value
