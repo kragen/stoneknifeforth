@@ -127,6 +127,7 @@ compile_time_dispatch = {
     '[': start_conditional, ']': end_conditional,
     '{': start_loop,        '}': end_loop,
     ' ': nop, '\n': nop,
+    "'": eat_byte,                      # ignore the literal character
 }
 
 def tbfcompile():
@@ -222,6 +223,9 @@ def loop():
     if not stack.pop(): return
     jump()
 
+def literal_byte():
+    # you put 'A into your program to get 65, or 'B to get 66, etc.
+    stack.append(ord(eat_byte()))
 
 run_time_dispatch = {    
     '(': jump,
@@ -238,6 +242,7 @@ run_time_dispatch = {
     '[': conditional, ']': nop,
     '{': nop,         '}': loop,
     ' ': nop, '\n': nop,
+    "'": literal_byte,
 }
 
 for digit in '0123456789': run_time_dispatch[digit] = push_literal

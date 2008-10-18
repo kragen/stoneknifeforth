@@ -22,5 +22,6 @@ while True:
                 if not firstline: sys.stdout.write('\n')
             elif wsp: sys.stdout.write(' ')
             sys.stdout.write(byte)
+            if byte == "'": sys.stdout.write(sys.stdin.read(1))
             wsp = newline = firstline = False
 sys.stdout.write('\n')

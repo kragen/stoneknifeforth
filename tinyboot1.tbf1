@@ -1,7 +1,9 @@
-( Second step toward a tiny bootstrap Forth compiler written in itself.
+( A tiny bootstrap Forth compiler written in itself.
 
-Generates an ELF executable for x86 Linux that exits with return code
-42, following Brian Raiter’s lead.  Uses functions.
+Generates an ELF executable for x86 Linux.
+
+Bytes preceded by ' and numbers are compiled into instructions to push
+their values on the stack.
 
 Compile-time primitives:
 ( — defines a comment that extends to the next right-paren
@@ -277,7 +279,7 @@ v B # 0 ( buffer for w )
 
 ( routine to dispatch a byte being compiled )
 : D 
-  d 40 = [ p { G 41 - } ; ]   ( drop comments until right paren )
+  d '( = [ p { G 41 - } ; ]   ( drop comments until right paren )
   d 32 = [ p ; ]              ( drop spaces )
   d 10 = [ p ; ]              ( drop newlines )
   d 35 = [ p w 48 - n E ; ]   ( # writes the next number as data literally )
@@ -292,6 +294,7 @@ v B # 0 ( buffer for w )
   d 93 = [ p P ; ]            ( ] backpatches the address on the compile stack )
   d 123 = [ p % H @ ; ]       ( { merely pushes an address to jump back to )
   d 125 = [ p j ; ]           ( } compiles a conditional jump to that address )
+  d '' = [ p G L ; ]          ( ' pushes a character literal )
   d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
                                   variable label )
   d 45 = [ p 41 . 4 . 36 . 88 . ; ] ( - is `sub %eax, [%esp]; pop %eax` )
