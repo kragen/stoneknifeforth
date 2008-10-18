@@ -97,48 +97,23 @@ Directory of magic numbers used, other than 0 and 1:
 10 — '\n' the ASCII linefeed or newline character
 15 — 0F extended opcode prefix byte, used to introduce `setle`, `movsbl`, 
      and `movzbl` instructions, as well as others not used here.
-32 — the size of the ELF program header;
-     ' ' ASCII space character
-33 — '!' ASCII exclamation mark character
-35 — '#' ASCII number sign character
+32 — the size of the ELF program header
 36 — third byte of `sub [%esp], %eax`;
      third byte of `sub %eax, [%esp]`
-40 — the size of any ELF segment headers that might exist;
-     '(' ASCII left parenthesis
-41 — ASCII right parenthesis;
-     first byte of `sub %eax, [%esp]`
-42 — '*' ASCII asterisk
+40 — the size of any ELF segment headers that might exist
+41 — first byte of `sub %eax, [%esp]`
 43 — first byte of `sub [%esp], %eax`; maybe redundant
-45 — '-' ASCII minus
-48 — '0' ASCII zero
 52 — the size of the ELF header
-57 — '9' ASCII nine
-58 — ':' ASCII colon
-59 — ';' ASCII semicolon
-60 — '<' ASCII less-than
-64 — '@' ASCII at-sign
 69 — 'E' ASCII uppercase E
 70 — 'F' ASCII uppercase F
-71 — 'G' ASCII uppercase G
 76 — 'L' ASCII uppercase L
 80 — `push %eax`
-81 — 'Q' ASCII uppercase Q
-87 — 'W' ASCII uppercase W
 88 — `pop %eax`
 89 — `pop %ecx`
 90 — `pop %edx`
-91 — `pop %ebx`;
-     '[' ASCII left square bracket
-92 — '\' ASCII backslash
-93 — ']' ASCII right square bracket
-98 — 'b' ASCII lowercase B
-109 — 'm' ASCII lowercase M
-115 — 's' ASCII lowercase S
+91 — `pop %ebx`
 116 — `jz` instruction, one-byte immediate PC-relative destination
 117 — `jnz` instruction, likewise
-118 — 'v' ASCII lowercase V
-123 — '{' ASCII left curly brace
-125 — '}' ASCII right curly brace
 127 — the first byte of an ELF executable
 128 — the interrupt number Linux uses for system calls: 0x80
 129 — first byte of `sub $xxx, %ebp`
@@ -243,12 +218,12 @@ v A * 1024 ( table of Addresses of definitions )
 : C % d F T + 1 x !  H @ x F A + ! ; ( register a colon definition )
 : V % d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
 v B # 0 ( buffer for w )
-: w { G B !  B @ 32 = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
+: w { G B !  B @ '  = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
 : E % H @ ! H @ 4 + H ! ; ( store word on top of stack at H, praise non-aligned access )
-: I d 48 <  x 57 >  O N ; ( isdigit )
+: I d '0 <  x '9 >  O N ; ( isdigit )
 : L 80 . ( push %eax ) 184 . ( load immediate %eax ) E ; ( push a literal )
 : t x d F + d +  + ; ( for base-10 decoding: A B -> 10A + B )
-: n { G d I N [ p ; ] 48 - t 1 }  ( parse a number from successive digits )
+: n { G d I N [ p ; ] '0 - t 1 }  ( parse a number from successive digits )
 ( NOTE: n eats the next byte after the end of the number and discards it. )
 
 : a  $ - Z h - + o @ + ;  ( convert from compiler address space to user space )
@@ -279,38 +254,38 @@ v B # 0 ( buffer for w )
 
 ( routine to dispatch a byte being compiled )
 : D 
-  d '( = [ p { G 41 - } ; ]   ( drop comments until right paren )
-  d 32 = [ p ; ]              ( drop spaces )
+  d '( = [ p { G ') - } ; ]   ( drop comments until right paren )
+  d '  = [ p ; ]              ( drop spaces )
   d 10 = [ p ; ]              ( drop newlines )
-  d 35 = [ p w 48 - n E ; ]   ( # writes the next number as data literally )
-  d 98 = [ p w 48 - n . ; ]   ( b does the same, but just as one byte )
-  d 59 = [ p R 195 . ; ]      ( ; is R, then `ret` )
-  d 33 = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
-  d 64 = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
-  d 58 = [ p w C R ; ]        ( : registers the next non-blank as a colon 
+  d '# = [ p w '0 - n E ; ]   ( # writes the next number as data literally )
+  d 'b = [ p w '0 - n . ; ]   ( b does the same, but just as one byte )
+  d '; = [ p R 195 . ; ]      ( ; is R, then `ret` )
+  d '! = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
+  d '@ = [ p 139 . 0 . ; ]      ( @ is `mov [%eax], %eax` )
+  d ': = [ p w C R ; ]        ( : registers the next non-blank as a colon 
                                   definition, then compiles a procedure prolog )
-  d 91 = [ p J ; ]            ( [ compiles a conditional jump, pushing an 
+  d '[ = [ p J ; ]            ( [ compiles a conditional jump, pushing an 
                                   address for backpatching )
-  d 93 = [ p P ; ]            ( ] backpatches the address on the compile stack )
-  d 123 = [ p % H @ ; ]       ( { merely pushes an address to jump back to )
-  d 125 = [ p j ; ]           ( } compiles a conditional jump to that address )
+  d '] = [ p P ; ]            ( ] backpatches the address on the compile stack )
+  d '{ = [ p % H @ ; ]        ( { merely pushes an address to jump back to )
+  d '} = [ p j ; ]            ( } compiles a conditional jump to that address )
   d '' = [ p G L ; ]          ( ' pushes a character literal )
-  d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
+  d 'v = [ p w V ; ]          ( v registers the next non-blank as a 
                                   variable label )
-  d 45 = [ p 41 . 4 . 36 . 88 . ; ] ( - is `sub %eax, [%esp]; pop %eax` )
-  d 115 = [ p 89 . 136 . 8 . 88 . ; ] ( s is `pop %ecx; movb %cl, [%eax]; 
+  d '- = [ p 41 . 4 . 36 . 88 . ; ] ( - is `sub %eax, [%esp]; pop %eax` )
+  d 's = [ p 89 . 136 . 8 . 88 . ; ] ( s is `pop %ecx; movb %cl, [%eax]; 
                                               pop %eax` )
-  d 60 = [ p i ; ]              ( < is implemented in “i” )
+  d '< = [ p i ; ]              ( < is implemented in “i” )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
-  d I [ 48 - n L ; ]          ( if it’s a digit, parse a number, compile code
+  d I [ '0 - n L ; ]          ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
-  d 42 = [ p w 48 - n         ( * reads a number )
+  d '* = [ p w '0 - n         ( * reads a number )
            H @ + H ! ; ]      ( and increments H by that number )
-  d 81 = [ p 0 L 0 L 0 L      ( Q calls _exit(0, 0, 0)
-             1 L 109 & ; ]    ( system call #1 (__NR_exit) ( syscall is `m` )
-  d 87 = [ p 1 L 4 L 109 &    ( W calls write(1, x, y) ( syscall #4 ) 
+  d 'Q = [ p 0 L 0 L 0 L      ( Q calls _exit(0, 0, 0)
+             1 L 'm & ; ]     ( system call #1 (__NR_exit) ( syscall is `m` )
+  d 'W = [ p 1 L 4 L 'm &     ( W calls write(1, x, y) ( syscall #4 ) 
            88 . ; ]           ( pop %eax to discard result )
-  d 94 = [ p H @ a e !        ( ^ sets the entry point e, a virtual address )
+  d '^ = [ p H @ a e !        ( ^ sets the entry point e, a virtual address )
         137 . 229 .           ( mov %esp, %ebp to initialize %ebp to %esp-2048 )
         129 . 237 . 0 . 8 . 0 . 0 . ; ] ( sub $2048, %ebp XXX use 2048 E? )
   . ;                     ( default is to copy to output )
@@ -319,19 +294,19 @@ v B # 0 ( buffer for w )
     D 1 }
 
 ^ 
-M $ Z - + H ! 109 C  ( register `m` routine for system calls using dummy `H` )
-/ $ Z - + H ! 92 V   ( register `\` variable )
+M $ Z - + H ! 'm C  ( register `m` routine for system calls using dummy `H` )
+/ $ Z - + H ! '\ V   ( register `\` variable )
 $ H ! ( initialize H )
 ( routine for `G` — wow, this is awful! compiles to about 80 bytes )
 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
-71 C R
-92 D 1 L 0 L 3 L 109 D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
-1 L 60 D 91 D ( 1 < [ → if it’s less than 1 )
-  88 . 0 1 - L 59 D  ( then pop %eax and return -1 )
-93 D ( ] → otherwise, )
-92 D ( get the address of \ )
+'G C R
+'\ D 1 L 0 L 3 L 'm D ( \ 1 0 3 m → syscall(__NR_read=3, 0, \, 1)
+1 L '< D '[ D ( 1 < [ → if it’s less than 1 )
+  88 . 0 1 - L '; D  ( then pop %eax and return -1 )
+'] D ( ] → otherwise, )
+'\ D ( get the address of \ )
 15 . 182 . 0 . ( and fetch a byte from it: `movzbl [%eax], %eax` )
-59 D ( and return! )
+'; D ( and return! )
 
 K ( compile input into output )
 ( now H - $ is the size of the compiled part of the program
