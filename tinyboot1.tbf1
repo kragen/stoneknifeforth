@@ -46,6 +46,7 @@ $ — the start of the area where the program gets compiled
 ` — the end of the headers
 Z — the end of the predefined blob of bytes to output, with slight changes
 H — the point where the program is currently getting compiled
+f — increases H by its argument
 X, Y — two temporary variables
 d — DUP
 p — DROP
