@@ -77,7 +77,7 @@ Also, if we could name input characters by example, as '*' or ?*
 instead of 42, it would make the compiler considerably clearer and
 probably a bit faster.
 
-Why?  To Know What I’m doing
+Why?  To Know What I’m Doing
 ----------------------------
 
 A year and a half ago, I wrote a [metacircular Bicicleta-language
@@ -145,6 +145,12 @@ Revisited][2]”, Higher-Order and Symbolic Computation, 11, 355–361
 > deﬁnition of LISP [1DI], which is a deﬁnitional interpreter in the
 > style of II, was a great help when I ﬁrst learned that language. But
 > it was not the sole support of my understanding.
+
+(For what it’s worth, it may not even the case that self-defined
+interpreters are necessarily Turing-complete; it might be possible to
+write a non-Turing-complete metacircular interpreter for a
+non-Turing-complete language, such as David Turner’s Total Functional
+Programming systems.)
 
 A metacircular compiler forces you to confront this extra complexity.
 Moreover, metacircular compilers are self-sustaining in a way that
@@ -235,3 +241,29 @@ incrementality further.
 My theory was that once I had a working compiler, I could add features
 to the language incrementally and test them as I went.  So far I
 haven’t gotten to that part.
+
+Why? Wirth envy
+---------------
+
+[Michael Franz writes][3]:
+
+> In order to find the optimal cost/benefit ratio, Wirth used a highly
+> intuitive metric, the origin of which is unknown to me but that may
+> very well be Wirth’s own invention. He used the compiler’s
+> self-compilation speed as a measure of the compiler’s
+> quality. Considering that Wirth’s compilers were written in the
+> languages they compiled, and that compilers are substantial and
+> non-trivial pieces of software in their own right, this introduced a
+> highly practical benchmark that directly contested a compiler's
+> complexity against its performance. Under the self-compilation speed
+> benchmark, only those optimizations were allowed to be incorporated
+> into a compiler that accelerated it by so much that the intrinsic
+> cost of the new code addition was fully compensated.
+
+Wirth is clearly one of the great apostles of simplicity in
+programming, together with with Edsger Dijkstra and Chuck Moore.  But
+I doubt very much that the Oberon compiler could ever compile itself
+in 2 million instructions, given the complexity of the Oberon
+language.
+
+[3]: http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf "Oberon — the overlooked jewel"
