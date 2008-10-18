@@ -221,7 +221,7 @@ v X # 0  v Y # 0  ( temp vars )
 : d  X !  X @  X @ ; ( DUP )  : p X ! ; ( DROP/pop )  
 : x X ! Y ! X @ Y @ ; ( SWAP/exch )
 
-: +  0 x -  x -  0 x - ;  ( a + b is 0 - [[0 - a] - b] )
+: +  0 x -  - ;  ( a + b is a - [0 - b] )
 : $ h 8192 + ;  ( this is where the program gets compiled )
 ( hopefully 8192 is enough to skip over the compiler itself )
 
