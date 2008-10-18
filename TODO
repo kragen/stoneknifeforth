@@ -35,7 +35,7 @@ D fix bug where comments left crap on the compile-time stack
 Then simplifications:
 D replace + and ~ with -
 D factor out w 48 - n (okay, 48 - n is now n, but we still have w n and n)
-- factor out H @ + H !
+D factor out H @ + H !
 D factor out h - o @ + (had to be done to compile past the end of itself)
 
 And cleanups:

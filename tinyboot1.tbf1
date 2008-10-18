@@ -205,8 +205,9 @@ v X # 0  v Y # 0  ( temp vars )
 : N [ 0 ; ] 1 ; ( Boolean negation ) : = - N ; ( equality )
 : O [ p 1 ; ] ; ( Boolean OR )       : > x < ; ( greater-than )
 
-( routine to add a byte to the program being compiled )
-: u H @ s  H @ 1 + H ! ;
+
+: f H @ + H ! ; ( move H "forward" by a given number of bytes )
+: u H @ s  1 f ; ( add a byte to the program being compiled )
 ( R emits an `xchg %ebp, %esp` — but we buffer it to see if it’s canceled by 
   another one before actually emitting it. U is the buffer, and % flushes it.
   So . adds a byte to the program being compiled, after flushing this buffer. )
@@ -219,7 +220,7 @@ v A * 1024 ( table of Addresses of definitions )
 : V % d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
 v B # 0 ( buffer for w )
 : w { G B !  B @ '  = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
-: E % H @ ! H @ 4 + H ! ; ( store word on top of stack at H, praise non-aligned access )
+: E % H @ !  4 f ; ( store word on top of stack at H, praise non-aligned access )
 : I d '0 <  x '9 >  O N ; ( isdigit )
 : L 80 . ( push %eax ) 184 . ( load immediate %eax ) E ; ( push a literal )
 : t x d F + d +  + ; ( for base-10 decoding: A B -> 10A + B )
@@ -279,8 +280,7 @@ v B # 0 ( buffer for w )
   d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
   d I [ n L ; ]               ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
-  d '* = [ p w n              ( * reads a number )
-           H @ + H ! ; ]      ( and increments H by that number )
+  d '* = [ p  w n  f ; ]      ( * reads a number and adds it to H )
   d 'Q = [ p 0 L 0 L 0 L      ( Q calls _exit(0, 0, 0)
              1 L 'm & ; ]     ( system call #1 (__NR_exit) ( syscall is `m` )
   d 'W = [ p 1 L 4 L 'm &     ( W calls write(1, x, y) ( syscall #4 ) 
