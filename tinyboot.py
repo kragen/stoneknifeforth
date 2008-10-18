@@ -156,8 +156,9 @@ def write_out():
 def quit():
     sys.exit(0)
 
-def add():
-    stack.append((stack.pop() + stack.pop()) & 0xFfffFfff)
+def subtract():
+    x = stack.pop()
+    stack.append((stack.pop() - x) & 0xFfffFfff)
 
 def push_literal():
     global program_counter
@@ -189,9 +190,6 @@ def store_byte():
     addr = stack.pop()
     extend_memory(addr)
     memory[addr] = stack.pop() & 255
-
-def bitwise_not():
-    stack.append(stack.pop() ^ 0xFfffFfff)
 
 def less_than():
     b = stack.pop()
@@ -230,8 +228,7 @@ run_time_dispatch = {
     'W': write_out,
     'G': read_byte,
     'Q': quit,
-    '+': add,
-    '~': bitwise_not,
+    '-': subtract,
     '<': less_than,
     '@': fetch,
     '!': store,

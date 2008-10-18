@@ -24,10 +24,9 @@ G — gets a byte from stdin
 W — given an address and size on the stack, writes the specified number of 
     bytes to stdout
 Q — exits the program with a return code of 0
-+ — adds two numbers
+- — subtracts two numbers
 @ — fetches a word from memory
 ! — stores to a word in memory whose address is on top of the stack
-~ — bitwise-negates a word
 ; — returns from a function
 < — a less-than test
 m — not used directly since the interpreter doesn't implement it,
@@ -41,7 +40,7 @@ e — the location of the entry point word in the ELF header
 o — the location of the word in the ELF program header that specifies the .ORG
 S — the location of the word in the ELF program header that specifies filesize
 $ — the start of the area where the program gets compiled
-- — subtraction
++ — addition
 ` — the end of the headers
 Z — the end of the predefined blob of bytes to output, with slight changes
 H — the point where the program is currently getting compiled
@@ -85,6 +84,7 @@ Directory of magic numbers used, other than 0 and 1:
     the system call number of the `read` system call
 4 — the size of a 32-bit word;
     second byte of `sub [%esp], %eax`;
+    second byte of `sub %eax, [%esp]`;
     the system call number of the `write` system call
 7 — in p_flags, means PF_R | PF_W | PF_X, making the program memory readable, 
     writable, and executable; 
@@ -99,13 +99,15 @@ Directory of magic numbers used, other than 0 and 1:
      ' ' ASCII space character
 33 — '!' ASCII exclamation mark character
 35 — '#' ASCII number sign character
-36 — third byte of `sub [%esp], %eax`
+36 — third byte of `sub [%esp], %eax`;
+     third byte of `sub %eax, [%esp]`
 40 — the size of any ELF segment headers that might exist;
      '(' ASCII left parenthesis
-41 — ASCII right parenthesis
+41 — ASCII right parenthesis;
+     first byte of `sub %eax, [%esp]`
 42 — '*' ASCII asterisk
-43 — first byte of `sub [%esp], %eax`;
-     '+' ASCII plus
+43 — first byte of `sub [%esp], %eax`; maybe redundant
+45 — '-' ASCII minus
 48 — '0' ASCII zero
 52 — the size of the ELF header
 57 — '9' ASCII nine
@@ -135,7 +137,6 @@ Directory of magic numbers used, other than 0 and 1:
 118 — 'v' ASCII lowercase V
 123 — '{' ASCII left curly brace
 125 — '}' ASCII right curly brace
-126 — '~' ASCII tilde
 127 — the first byte of an ELF executable
 128 — the interrupt number Linux uses for system calls: 0x80
 129 — first byte of `sub $xxx, %ebp`
@@ -151,14 +152,12 @@ Directory of magic numbers used, other than 0 and 1:
       third byte of `setle %al`;
       third byte of `movsbl %al, %eax`
 195 — `ret` instruction
-200 — second byte of `dec %al` and `add %ecx, %eax`
+200 — second byte of `dec %al`
 205 — `int` interrupt instruction
-208 — second byte of `not %eax`
 229 — second byte of `mov %esp, %ebp`
 232 — `call` instruction opcode, 4-byte immediate PC-relative destination
 236 — second byte of `xchg %ebp, %esp`
 237 — second byte of `sub $xxx, %ebp`
-247 — first byte of `not %eax`
 254 — first byte of `dec %al`
 1024 — a table size in bytes: 256 entries of 4 bytes each
 4096 — the program runs with its origin at 4096, 0x1000, because that still 
@@ -214,11 +213,7 @@ starting from `$`.
 Then the only slightly hairy thing is to adjust `m` and `\` 
 to point to the right place: a bit before `$`. )
 v Z ( the end of the non-compiled stuff. )
-( so the correct adjustment is to add $ - Z to them.
-)
-
-: $ h 8192 + ;  ( this is where the program gets compiled )
-( hopefully 8192 is enough to skip over the compiler itself )
+( so the correct adjustment is to add $ - Z to them. )
 
 v H # 0 ( "HERE", where we're compiling )
 
@@ -226,7 +221,10 @@ v X # 0  v Y # 0  ( temp vars )
 : d  X !  X @  X @ ; ( DUP )  : p X ! ; ( DROP/pop )  
 : x X ! Y ! X @ Y @ ; ( SWAP/exch )
 
-: -  ~ 1 +  + ; ( take two's complement, then add, to subtract )
+: +  0 x -  x -  0 x - ;  ( a + b is 0 - [[0 - a] - b] )
+: $ h 8192 + ;  ( this is where the program gets compiled )
+( hopefully 8192 is enough to skip over the compiler itself )
+
 : N [ 0 ; ] 1 ; ( Boolean negation ) : = - N ; ( equality )
 : O [ p 1 ; ] ; ( Boolean OR )       : > x < ; ( greater-than )
 
@@ -296,8 +294,7 @@ v B # 0 ( buffer for w )
   d 125 = [ p j ; ]           ( } compiles a conditional jump to that address )
   d 118 = [ p w V ; ]         ( v registers the next non-blank as a 
                                   variable label )
-  d 43 = [ p 89 . 1 . 200 . ; ] ( + is `pop %ecx; add %ecx, %eax` )
-  d 126 = [ p 247 . 208 . ; ] ( ~ is `not %eax` )
+  d 45 = [ p 41 . 4 . 36 . 88 . ; ] ( - is `sub %eax, [%esp]; pop %eax` )
   d 115 = [ p 89 . 136 . 8 . 88 . ; ] ( s is `pop %ecx; movb %cl, [%eax]; 
                                               pop %eax` )
   d 60 = [ p i ; ]              ( < is implemented in “i” )

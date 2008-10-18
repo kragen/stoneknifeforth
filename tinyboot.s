@@ -19,6 +19,11 @@ syscall:
         int $0x80
 plus:   pop %ecx
 foo:    add %ecx, %eax
+wrongminus:
+        pop %ecx
+        sub %ecx, %eax
+minus:  sub %eax, (%esp)
+        pop %eax
 lessthan:
         sub (%esp), %eax
         pop %eax

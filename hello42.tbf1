@@ -16,7 +16,7 @@ Run-time primitives:
 W — given an address and size on the stack, writes the specified number of 
     bytes to stdout
 Q — exits the program with a return code of 0
-+ — adds two numbers
+- — subtracts two numbers
 @ — fetches a word from memory
 ! — stores to a word in memory
 ~ — bitwise-negates a word
@@ -58,6 +58,6 @@ v h ( ELF header, Elf32_Ehdr )
 
 v $
 
-^ o @ 52 + 32 + e ! ( set entry point correctly wrt origin )
-$  h ~ 1 +  + S ! ( subtract h from $ to get size of whole program )
+^ o @ 0 52 - - 0 32 - - e ! ( set entry point correctly wrt origin: o - -52 - -32 )
+$  h - S ! ( subtract h from $ to get size of whole program )
 h S @ W Q
