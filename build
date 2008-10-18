@@ -1,28 +1,34 @@
 #!/bin/sh
 set -ve
+# Build script.  I tried writing a Makefile, but it was longer and harder to debug.
+# Maybe I was doing it wrong.
+compile () {
+    if ! ./tinyboot.py tinyboot1.tbf1 < "$1.tbf1" > "$1"; then 
+        cat "$1"
+        exit 1
+    fi
+    chmod 755 "$1"
+}
+
 if ! ./tinyboot.py hello42.tbf1 > hello42; then cat hello42; exit 1; fi
 chmod 755 hello42
 ./hello42 || echo $?
 
 ./tinyboot.py Q.tbf1
-if ! ./tinyboot.py tinyboot1.tbf1 < Q.tbf1 > Q; then cat Q; exit 1; fi
-chmod 755 Q
+compile Q
 strace ./Q
 
 ./tinyboot.py hi.tbf1
-if ! ./tinyboot.py tinyboot1.tbf1 < hi.tbf1 > hi; then cat hi; exit 1; fi
-chmod 755 hi
+compile hi
 strace ./hi
 
 echo x | ./tinyboot.py cat1.tbf1
-if ! ./tinyboot.py tinyboot1.tbf1 < cat1.tbf1 > cat1; then cat cat1; exit 1; fi
-chmod 755 cat1
+compile cat1
 echo x | strace ./cat1
 
 if ! ./tinyboot.py cat.tbf1 < cat.tbf1 > tmp.out ; then cat tmp.out; exit 1; fi
 cmp cat.tbf1 tmp.out
-if ! ./tinyboot.py tinyboot1.tbf1 < cat.tbf1 > cat ; then cat cat; exit 1; fi
-chmod 755 cat
+compile cat
 ./cat < cat.tbf1 > tmp.out
 cmp cat.tbf1 tmp.out
 ./cat < tinyboot1.tbf1 > tmp.out # larger files sometimes show problems
@@ -30,17 +36,15 @@ cmp tinyboot1.tbf1 tmp.out
 rm tmp.out
 
 echo passamaquoddy | ./tinyboot.py star.tbf1
-if ! ./tinyboot.py tinyboot1.tbf1 < star.tbf1 > star ; then cat star; exit 1; fi
-chmod 755 star
+compile star
 echo passamaquoddy | strace ./star
 
-if ! ./tinyboot.py tinyboot1.tbf1 < tinyboot1.tbf1 > tb1; then cat tb1; exit 1; fi
-chmod 755 tb1
-time ./tb1 < tinyboot1.tbf1 > tb2
-cmp tb1 tb2
+compile tinyboot1
+time ./tinyboot1 < tinyboot1.tbf1 > tb2
+cmp tinyboot1 tb2
 chmod 755 tb2
 
 ./trim.py -i < tinyboot1.tbf1 > trimmed.tbf1
-time ./tb1 < trimmed.tbf1 > trimmed
+time ./tinyboot1 < trimmed.tbf1 > trimmed
 cmp tb2 trimmed
 wc trimmed.tbf1
