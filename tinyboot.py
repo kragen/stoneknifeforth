@@ -5,9 +5,9 @@
 Implements an extremely minimal Forth-like language, used to write
 tinyboot1.tbf1.
 
-The theory is that first we 'compile' the program by reading through
+The theory is that first we ‘compile’ the program by reading through
 it to find compile-time definitions and actions, which sets up the
-initial state of memory; then we 'run' the program by directly
+initial state of memory; then we ‘run’ the program by directly
 interpreting its text, given that initial state.
 
 """

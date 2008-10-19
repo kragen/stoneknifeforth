@@ -255,7 +255,7 @@ Why? Wirth envy
 > quality. Considering that Wirth’s compilers were written in the
 > languages they compiled, and that compilers are substantial and
 > non-trivial pieces of software in their own right, this introduced a
-> highly practical benchmark that directly contested a compiler's
+> highly practical benchmark that directly contested a compiler’s
 > complexity against its performance. Under the self-compilation speed
 > benchmark, only those optimizations were allowed to be incorporated
 > into a compiler that accelerated it by so much that the intrinsic
@@ -268,3 +268,76 @@ in 2 million instructions, given the complexity of the Oberon
 language.
 
 [3]: http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf "Oberon — the overlooked jewel"
+
+Far-Fetched Ways This Code Could Actually be Useful
+---------------------------------------------------
+
+The obvious way that it could be useful is that you could read it and
+learn things from it, then put them to use in actually useful
+software.  This section is about the far-fetched ways instead.
+
+If you want to counter Ken Thompson’s “Trusting Trust” attack, you
+would want to start with a minimal compiler on a minimal chip;
+StoneKnifeForth might be a good approach.
+
+For bui
+
+Related work
+------------
+
+Andre Adrian’s 2008 BASICO: <http://www.andreadrian.de/tbng/>
+
+> - is a small imperative programming language that is just powerful
+>   enough to compile itself (compiler bootstrapping).
+> - has no GOTO, but has while-break-wend and multiple return
+> - has C-like string handling.
+> - is implemented in less then 1000 source code lines for the compiler.
+> - produces real binary programs for x86 processors, not P-code or
+>   Byte-Code.
+> - uses the C compiler toolchain (assembler, linker)
+> - uses C library functions like printf(), getchar(), strcpy(),
+>   isdigit(), rand() for run-time support.
+
+Actually it produces assembly, not executables.
+
+Version 0.9 was released 15 Jul 2006.  The 1000 source lines include a
+recursive-descent parser and a hand-coded lexer.
+
+Sample code:
+
+    // return 1 if ch is in s, 0 else
+    func in(ch: char, s: array char): int
+    var i: int
+    begin
+      i = 0
+      while s[i] # 0 do
+        if ch = s[i] then
+          return 1
+        endif
+        i = i + 1
+      wend
+      return 0
+    end
+
+Ian Piumarta’s system.
+
+Oberon.
+
+OTCC.
+
+F-83.
+
+eForth.
+
+Crenshaw's Let's Make a Compiler.
+
+Ikarus.
+
+Ur-Scheme.
+
+PyPy.
+
+Bootstrapping a simple compiler from nothing: 
+Edmund GRIMLEY EVANS
+2001
+<http://web.archive.org/web/20061108010907/http://www.rano.org/bcompiler.html>
