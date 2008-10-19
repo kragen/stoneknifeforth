@@ -319,7 +319,7 @@ Sample code:
       return 0
     end
 
-Ian Piumarta’s system.
+Ian Piumarta’s COLA system.
 
 Oberon.
 
@@ -327,9 +327,14 @@ OTCC.
 
 F-83.
 
-eForth.
+eForth, especially the ITC eForth.
 
-Crenshaw's Let's Make a Compiler.
+Jack Crenshaw’s [Let’s Build a Compiler][4].  This is a how-to book
+that walks you through an incrementally-constructed compiler for a toy
+language, written in Pascal, in about 340 pages of text.  The text is
+really easy to read, but it will still take at least three to ten
+hours to read.  It uses recursive-descent parsing, no intermediate
+representation, and it emits 68000 assembly code.
 
 Ikarus.
 
@@ -341,3 +346,5 @@ Bootstrapping a simple compiler from nothing:
 Edmund GRIMLEY EVANS
 2001
 <http://web.archive.org/web/20061108010907/http://www.rano.org/bcompiler.html>
+
+[4]: http://compilers.iecc.com/crenshaw/
