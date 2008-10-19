@@ -215,12 +215,13 @@ v X # 0  v Y # 0  ( temp vars )
 v U # 0  : % U @ [ 135 u 236 u  0 U ! ] ;  : R U @ N U ! ;  : . % u ;
 
 ( T and A are two 1024-byte tables; since they should start out as zeroes,
-  we put them past the end of the program instead of allocating space for them )
-: T h 6144 + ; ( Table of Types of definitions: 1 for subroutine, 2 for data label )
-: A h 7168 + ; ( table of Addresses of definitions )
+  we put them past the end of the program instead of allocating space for them.
+  The T and A words index into the tables. )
 : F d + d + ; ( 4 *, for indexing these tables )
-: C % d F T + 1 x !  H @ x F A + ! ; ( register a colon definition )
-: V % d F T + 2 x !  H @ x F A + ! ; ( register a variable definition )
+: T F h 6144 + + ; ( Table of definition Types: 1 for code, 2 for data )
+: A T 1024 + ;     ( table of definition Addresses )
+: C % d T 1 x !  H @ x A ! ; ( register a colon definition )
+: V % d T 2 x !  H @ x A ! ; ( register a variable definition )
 v B # 0 ( buffer for w )
 : w { G B !  B @ '  = B @ 10 = O N [ B @ ; ]  1 }  ( return next non-whitespace char )
 : E % H @ !  4 f ; ( store word on top of stack at H, praise non-aligned access )
@@ -233,13 +234,13 @@ v B # 0 ( buffer for w )
 : a  $ - Z h - + o @ + ;  ( convert from compiler address space to user space )
 
 ( routine to compile bytes found in the table )
-: & d F T + @ 1 = [ ( if it’s a subroutine...)
+: & d T @ 1 = [ ( if it’s a subroutine...)
     R 232 . ( CALL instruction; now we have to compute the offset )
     H @ 4 + ( find address of next instruction )
-    x F A + @ x - ( find offset to subroutine )
+    x A @  x - ( find offset to subroutine )
     E ( encode it )
     R ; ] ( okay, and otherwise, it’s a variable... )
-  F A + @ a L ;
+  A @ a L ;
 
 ( J: compile a forward conditional jump )
 : J 133 . 192 . ( test %eax, %eax ) 88 . ( pop %eax ) 116 . H @ 0 . ( jz 0 ) ;
@@ -280,7 +281,7 @@ v B # 0 ( buffer for w )
   d 's = [ p 89 . 136 . 8 . 88 . ; ] ( s is `pop %ecx; movb %cl, [%eax]; 
                                               pop %eax` )
   d '< = [ p i ; ]              ( < is implemented in “i” )
-  d F T + @ [ & ; ]           ( if it’s in the table, dispatch to & )
+  d T @ [ & ; ]               ( if it’s in the table, dispatch to & )
   d I [ n L ; ]               ( if it’s a digit, parse a number, compile code
                                 to push that number immediate )
   d '* = [ p  w n  f ; ]      ( * reads a number and adds it to H )
