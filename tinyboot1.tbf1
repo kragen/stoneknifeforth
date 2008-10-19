@@ -143,6 +143,9 @@ Directory of magic numbers used, other than 0 and 1:
        that null pointer references will crash the program rather than making
        mysterious bugs.  Also there’s a buffer of this size, which will go 
        away soon.
+6144 — 6 * 1024: the offset at which a couple of 1024-byte tables are 
+       constructed, ending just before the compiled program itself.
+8192 — the offset at which the compiler constructs the compiled program.
 655360 — the total memory space allocated for the program
 )
 
@@ -216,7 +219,7 @@ v U # 0  : % U @ [ 135 u 236 u  0 U ! ] ;  : R U @ N U ! ;  : . % u ;
 
 ( T and A are two 1024-byte tables; since they should start out as zeroes,
   we put them past the end of the program instead of allocating space for them.
-  The T and A words index into the tables. )
+  The T and A routines return the address of an entry in the tables. )
 : F d + d + ; ( 4 *, for indexing these tables )
 : T F h 6144 + + ; ( Table of definition Types: 1 for code, 2 for data )
 : A T 1024 + ;     ( table of definition Addresses )
@@ -262,7 +265,7 @@ v B # 0 ( buffer for w )
   d '( = [ p { G ') - } ; ]   ( drop comments until right paren )
   d '  = [ p ; ]              ( drop spaces )
   d 10 = [ p ; ]              ( drop newlines )
-  d '# = [ p w n E ; ]        ( # writes the next number as data literally )
+  d '# = [ p w n E ; D ]      ( # writes the next number as data literally )
   d 'b = [ p w n . ; ]        ( b does the same, but just as one byte )
   d '; = [ p R 195 . ; ]      ( ; is R, then `ret` )
   d '! = [ p 143 . 0 . 88 . ; ] ( ! is `pop [%eax]; pop %eax` )
