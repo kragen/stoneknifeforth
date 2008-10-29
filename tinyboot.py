@@ -23,8 +23,9 @@ stack  = []
 rstack = []
 
 ### Compile-time actions.
-# Note that these should leave program_counter pointing after the
-# last byte they consume.
+# Note that these should leave program_counter pointing after the last
+# byte they consume, i.e. they should eat_byte the last byte they
+# consume.
 
 program_counter = 0
 
@@ -37,13 +38,25 @@ def eat_byte():
     program_counter += 1
     return current_byte
 
+def advance_past_whitespace():
+    while program_counter < len(program) and current_byte() in ' \n':
+        eat_byte()
+
+def advance_to_whitespace():
+    while program_counter < len(program) and current_byte() not in ' \n':
+        eat_byte()
+
+def get_token():
+    advance_past_whitespace()
+    # XXX and on EOF?
+    rv = current_byte()
+    if rv not in "0123456789'": advance_to_whitespace()
+    return rv
+
 def eat_comment():
     comment_start = program_counter
     while eat_byte() != ')': pass
     jump_targets[comment_start] = program_counter
-
-def advance_past_whitespace():
-    while current_byte() in ' \n': eat_byte()
 
 def push_dataspace_label(n):
     return lambda: stack.append(n)
@@ -54,8 +67,7 @@ def define(name, action):
 
 def dataspace_label():
     "Define a label in data space."
-    advance_past_whitespace()
-    name = eat_byte()
+    name = get_token()
     define(name, push_dataspace_label(len(memory)))
 
 def call_function(n):
@@ -66,8 +78,7 @@ def call_function(n):
     return rv
 
 def define_function():
-    advance_past_whitespace()
-    name = eat_byte()
+    name = get_token()
     define(name, call_function(program_counter))
 
 def read_number():
@@ -98,6 +109,10 @@ def set_start_address():
 
 def nop(): pass
 
+def skip_literal_byte():
+    eat_byte()                          # skip the '
+    eat_byte()                          # skip the character itself
+
 # We have to find the backwards jump targets for loops while scanning
 # forward.  Otherwise we’d have to find them by scanning backwards,
 # and you can’t correctly skip comments that way, since comments don’t
@@ -126,21 +141,26 @@ compile_time_dispatch = {
     '^': set_start_address,
     '[': start_conditional, ']': end_conditional,
     '{': start_loop,        '}': end_loop,
-    ' ': nop, '\n': nop,
-    "'": eat_byte,                      # ignore the literal character
+    ' ': eat_byte, '\n': eat_byte,
+    "'": skip_literal_byte,
 }
+
+for digit in '0123456789': compile_time_dispatch[digit] = read_number
 
 def tbfcompile():
     while program_counter < len(program):
-        byte = eat_byte()
-        if byte in compile_time_dispatch:
-            compile_time_dispatch[byte]()
-        elif byte in run_time_dispatch:
+        token = get_token()
+        if token in compile_time_dispatch:
+            compile_time_dispatch[token]()
+        elif token in run_time_dispatch:
             pass                 # ignore things from run-time for now
         else:
-            excerpt_beginning = max(0, program_counter - 10)
+            excerpt_beginning = max(0, program_counter - 30)
             assert False, '%r not defined at %r' % \
-                   (byte, program[excerpt_beginning:program_counter])
+                   (token, program[excerpt_beginning:program_counter])
+        # To ensure the loop test condition hits the EOF instead of
+        # get_token() choking on it:
+        advance_past_whitespace()
 
 ### Run-time actions.
 # Execution should pretty much stay inside of functions, and we
@@ -162,8 +182,6 @@ def subtract():
     stack.append((stack.pop() - x) & 0xFfffFfff)
 
 def push_literal():
-    global program_counter
-    program_counter -= 1
     stack.append(read_number())
 
 def decode(bytes):
@@ -225,6 +243,7 @@ def loop():
 
 def literal_byte():
     # you put 'A into your program to get 65, or 'B to get 66, etc.
+    eat_byte()                          # to skip the '
     stack.append(ord(eat_byte()))
 
 run_time_dispatch = {    
@@ -253,7 +272,7 @@ def tbfrun():
     global program_counter
     program_counter = start_address
     while True:
-        run_time_dispatch[eat_byte()]()
+        run_time_dispatch[get_token()]()
 
 def main(infile):
     global program
