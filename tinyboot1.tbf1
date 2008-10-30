@@ -43,7 +43,6 @@ o — the location of the word in the ELF program header that specifies the .ORG
 S — the location of the word in the ELF program header that specifies filesize
 $ — the start of the area where the program gets compiled
 + — addition
-` — the end of the headers
 Z — the end of the predefined blob of bytes to output, with slight changes
 H — the point where the program is currently getting compiled
 f — increases H by its argument
@@ -178,7 +177,6 @@ var header ( ELF header, Elf32_Ehdr )
     ( p_filesz:) var SIZE # 0      ( p_memsz:) # 655360
      ( p_flags:) # 7               ( p_align:) # 4096
 
-var ` ( I think this is unused!)
 ( b 7 b 7 b 7 b 7 b 7 ( to help disassemblers resync )
 var Msyscall  ( system call routine; called in program 
                 with lowercase `m`)
