@@ -193,7 +193,7 @@ kilobytes of source code, about 1600 lines if you leave out the
 comments.
 
 Now, maybe you can write 1600 lines of working Scheme in a day, but I
-sure as hell can’t.  It's still not a very large compiler, as
+sure as hell can’t.  It’s still not a very large compiler, as
 compilers go, but it’s a lot bigger than `otccelf`.  So I hypothesized
 that maybe a simpler language, without a requirement for compatibility
 with something else, would enable me to get a compiler bootstrapped
@@ -231,7 +231,7 @@ shows active development happening on six of those days (including
 some help from my friend Aristotle).  So that’s an improvement, but
 not as much of an improvement as I would like.  At that point, it was
 13k of source, 114 non-comment lines of code, which is definitely a
-lot smaller than Ur-Scheme's 90k and 1600 lines.  (Although there are
+lot smaller than Ur-Scheme’s 90k and 1600 lines.  (Although there are
 another 181 lines of Python for the bootstrap interpreter.)
 
 It’s possible to imagine writing and debugging 114 lines of code in a
@@ -267,7 +267,19 @@ I doubt very much that the Oberon compiler could ever compile itself
 in 2 million instructions, given the complexity of the Oberon
 language.
 
+R. Kent Dybvig used the same criterion; speaking of the 1985–1987
+development of Chez Scheme, [he writes][dybvig]:
+
+> At some point we actually instituted the following rule to keep a
+> lid on compilation overhead: if an optimization doesn’t make the
+> compiler itself enough faster to make up for the cost of doing the
+> optimization, the optimization is discarded. This ruled out several
+> optimizations we tried, including an early attempt at a source
+> optimizer.
+
+
 [3]: http://www.ics.uci.edu/~franz/Site/pubs-pdf/BC03.pdf "Oberon — the overlooked jewel"
+[dybvig]: http://www.cs.indiana.edu/~dyb/pubs/hocs.pdf "The Development of Chez Scheme"
 
 Far-Fetched Ways This Code Could Actually be Useful
 ---------------------------------------------------
@@ -280,7 +292,17 @@ If you want to counter Ken Thompson’s “Trusting Trust” attack, you
 would want to start with a minimal compiler on a minimal chip;
 StoneKnifeForth might be a good approach.
 
-For bui
+What’s Next
+-----------
+
+Maybe building a compiler for a slightly bigger and better language on
+top of this one.  Maybe something like Lua, Scheme, or Smalltalk.
+
+Certainly the system as it exists is not that convenient to program
+in, the code is pretty hard to read, and when it fails, it is hard to
+debug.  Garbage collection, arrays with bounds-checking, finite
+maps (associative arrays), strong typing (really any typing), dynamic
+dispatch, metaprogramming, and so on, these would all help.
 
 Related work
 ------------
