@@ -207,12 +207,12 @@ var X # 0  var Y # 0  ( temp vars )
 : dup  X !  X @  X @ ;  : pop X ! ;
 : xchg X ! Y ! X @ Y @ ; ( SWAP/exch )
 
-: +  0 x -  - ;  ( a + b is a - [0 - b] )
+: +  0 xchg -  - ;  ( a + b is a - [0 - b] )
 : $origin header 8192 + ;  ( this is where the program gets compiled )
 ( hopefully 8192 is enough to skip over the compiler itself )
 
-: NOT [ 0 ; ] 1 ; ( Boolean ) : = - N ; ( equality )
-: OR  [ p 1 ; ] ;             : > x < ; ( greater-than )
+: NOT [ 0 ; ] 1 ; ( Boolean ) : = - NOT ;  ( equality )
+: OR  [ pop 1 ; ] ;           : > xchg < ; ( greater-than )
 
 
 : forward HERE @ + HERE ! ; ( move HERE “forward” by a given number of bytes )
@@ -222,7 +222,7 @@ var X # 0  var Y # 0  ( temp vars )
   %flush flushes it.
   So . adds a byte to the program being compiled, after flushing this buffer. )
 var U # 0  : %flush U @ [ 135 u 236 u  0 U ! ] ;  : Restack U @ NOT U ! ;
-: . % u ;
+: . %flush u ;
 
 ( T and A are two 1024-byte tables; since they should start out as zeroes,
   we put them past the end of the program instead of allocating space for them.
@@ -230,9 +230,9 @@ var U # 0  : %flush U @ [ 135 u 236 u  0 U ! ] ;  : Restack U @ NOT U ! ;
 : Four* dup + dup + ; ( 4 * )
 : Type Four* header 6144 + + ; ( Table of definition Types: 1=code, 2=data )
 : Addr Type 1024 + ;     ( table of definition Addresses )
- ( register a colon definition )
+( register a colon definition )
 : Colon %flush dup Type 1 xchg !  HERE @ xchg Addr ! ;
- ( register a variable definition )
+( register a variable definition )
 : Var   %flush dup Type 2 xchg !  HERE @ xchg Addr ! ;
 : Isdigit dup '0 <  x '9 >  OR NOT ;
 var Buf # 0 ( buffer for getchar )
@@ -248,10 +248,10 @@ var Buf # 0 ( buffer for getchar )
 : tenstep xchg dup Four* + dup +  + ; ( for base-10 decoding: A B -> 10A + B )
 ( parse a number from successive digits; first digit on stack )
 : number '0 - { Getchar dup Isdigit NOT [ pop ; ] '0 - tenstep 1 }
-( NOTE: n eats the next byte after the end of the number and discards it. )
+( NOTE: number eats the next byte after the end of the number and discards it. )
 
 ( convert from compiler address space to user space )
-: address  $origin - Z-end header - + origin @ + ;
+: address  $origin -  Z-end header - +  origin @ + ;
 
 ( routine to compile bytes found in the table )
 : &dispatch dup Type @ 1 = [ ( if it’s a subroutine...)
@@ -324,16 +324,17 @@ var Buf # 0 ( buffer for getchar )
 Msyscall $origin Z-end - + HERE ! 'm Colon
 /buf     $origin Z-end - + HERE ! '\ Var   ( register `\` variable )
 $origin HERE ! ( initialize H )
+
 ( routine for `G` — wow, this is awful! compiles to about 80 bytes )
 ( 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
 'G Colon Restack ( define `G` )
-'\ Dispatch 1 Lit 0 Lit 3 Lit 'm Dispatch ( \ 1 0 3 m →
-                                            syscall(__NR_read=3, 0, \, 1)
-1 Lit '< Dispatch '[ Dispatch ( 1 < [ → if it’s less than 1 )
-  88 . 0 1 - Lit '; Dispatch  ( then pop %eax and return -1 )
-'] Dispatch ( ] → otherwise, )
-'\ Dispatch ( get the address of \ )
-15 . 182 . 0 . ( and fetch a byte from it: `movzbl [%eax], %eax` )
+  '\ Dispatch 1 Lit 0 Lit 3 Lit 'm Dispatch ( \ 1 0 3 m →
+                                              syscall(__NR_read=3, 0, \, 1)
+  1 Lit '< Dispatch '[ Dispatch ( 1 < [ → if it’s less than 1 )
+    88 . 0 1 - Lit '; Dispatch  ( then pop %eax and return -1 )
+  '] Dispatch ( ] → otherwise, )
+  '\ Dispatch ( get the address of \ )
+  15 . 182 . 0 . ( and fetch a byte from it: `movzbl [%eax], %eax` )
 '; Dispatch ( and return! )
 
 Kompile ( compile input into output )
