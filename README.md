@@ -50,34 +50,6 @@ to compile itself.  (So you would think that it could compile itself
 in 2.6 ms.  The long runtimes are a result of reading its input one
 byte at at time.)
 
-Reducing Executable Size
-------------------------
-
-There are straightforward changes to reduce the executable size further,
-but they will make the compiler more complicated, not simpler.  Some
-of the most-referenced routines should be open-coded, which should
-also speed it up.  Here are the routines that were called in more than
-10 places some time ago:
-
-     11 0x169  xchg
-     13 0xc20  Literal
-     22 0x190  -  (now replaced by +, which is only used in 25 places)
-     25 0x15b  pop
-     26 0x1bc  =
-     35 0x13d  dup
-     60 0x286  .
-
-Of these, xchg, pop, -, =, and dup could all be open-coded at zero or
-negative cost at the call sites, and then their definitions and
-temporary variables could be removed.
-
-Improving Clarity
------------------
-
-If routine names could be more than one character, it would help a
-lot; this should be possible with minimal extra implementation
-complexity if only the first character is significant for comparisons.
-
 Why?  To Know What I’m Doing
 ----------------------------
 
@@ -292,17 +264,191 @@ If you want to counter Ken Thompson’s “Trusting Trust” attack, you
 would want to start with a minimal compiler on a minimal chip;
 StoneKnifeForth might be a good approach.
 
+Blind Alleys
+------------
+
+Here are some things I thought about but didn’t do.
+
+### Making More Things Into Primitives ###
+
+There are straightforward changes to reduce the executable size
+further, but they would make the compiler more complicated, not
+simpler.  Some of the most-referenced routines should be open-coded,
+which should also speed it up, as well as making them available to
+other programs compiled with the same compiler.  Here are the routines
+that were called in more than 10 places some time ago:
+
+     11 0x169  xchg
+     13 0xc20  Lit
+     22 0x190  -  (now replaced by +, which is only used in 25 places)
+     25 0x15b  pop
+     26 0x1bc  =
+     35 0x13d  dup
+     60 0x286  .
+
+Of these, `xchg`, `pop`, `-`, `=`, and `dup` could all be open-coded
+at zero or negative cost at the call sites, and then their definitions
+and temporary variables could be removed.
+
+I tried out open-coding `xchg`, `pop`, `dup`, and `+`.  The executable
+shrank by 346 bytes (from 4223 bytes to 3877 bytes, an 18% reduction;
+it also executed 42% fewer instructions to compile itself, from
+1,492,993 down to 870,863 on the “trimmed” version of itself), and the
+source code stayed almost exactly the same size, at 119 non-comment
+lines; the machine-code definitions were one line each.  They look
+like this:
+
+    dup 'd = [ pop 80 . ; ]               ( dup is `push %eax` )
+    dup 'p = [ pop 88 . ; ]               ( pop is `pop %eax` )
+    dup 'x = [ pop 135 . 4 . 36 . ; ]     ( xchg is xchg %eax, (%esp)
+    dup '+ = [ pop 3 . 4 . 36 . 89 . ; ]  ( `add [%esp], %eax; pop %ecx` )
+
+However, I decided not to do this.  The current compiler already
+contains 58 bytes of machine code, and this would add another 9 bytes
+to that.  The high-level Forth definitions (`: dup X ! ;` and the
+like) are, I think, easier to understand and verify the correctness
+of; and they don’t depend on lower-level details like what
+architecture we’re compiling for, or how we represent the stacks.
+Additionally, it adds another step to the bootstrap process.
+
+### Putting the Operand Stack on `%edi` ###
+
+Forth uses two stacks: one for procedure nesting (the “return stack”)
+and one for parameter passing (the “data stack” or “operand stack”).
+This arrangement is shared by other Forth-like languages such as
+PostScript and HP calculator programs.  Normally, in Forth, unlike in
+these other languages, the “return stack” is directly accessible to
+the user.
+
+Right now, StoneKnifeForth stores these two stacks mostly in memory,
+although it keeps the top item of the operand stack in `%eax`.  The
+registers `%esp` and `%ebp` point to the locations of the stacks in
+memory; the one that’s currently being used is in `%esp`, and the
+other one is in `%ebp`.  So the compiler has to emit an `xchg %esp,
+%ebp` instruction whenever it switches between the two stacks.  As a
+result, when compiling itself, something like 30% of the instructions
+it emits are `xchg %esp, %ebp`.
+
+Inspired, I think, by colorForth, I considered just keeping the
+operand stack pointer in `%edi` and using it directly from there,
+rather than swapping it into `%esp`.  The x86 has a `stosd`
+instruction (GCC calls it `stosl`) which will write a 32-bit value in
+`%eax` into memory at `%edi` and increment (or decrement) `%edi` by 4,
+which is ideal for pushing values from `%eax` (as in `Lit`, to make
+room for the new value).  Popping values off the stack, though,
+becomes somewhat hairier.  The `lodsd` or `lodsl` instruction that
+corresponds to `stosl` uses `%esi` instead of `%edi`, you have to set
+“DF”, the direction flag, to get it to decrement instead of
+incrementing, and like `stosl`, it accesses memory *before* updating
+the index register, not after.
+
+So, although we would eliminate a lot of redundant and ugly `xchg`
+instructions in the output, as well as the `Restack`, `u`, `U`, and
+`%flush` functions, a bunch of the relatively simple instruction
+sequences currently emitted by the compiler would become hairier.
+I think the changes are more or less as follows:
+
+- `!` is currently `pop (%eax); pop %eax`, which is three bytes; this
+  occurs 17 times in the output.  The new code would be:
+    sub $8, %edi
+    mov 4(%edi), %ecx
+    mov %ecx, (%eax)
+    mov (%edi), %eax
+  This is ten bytes.  `store`, the byte version of `!`, is similar.
+- `-` is currently `sub %eax, (%esp); pop %eax`, which is four bytes;
+  this occurs 23 times in the output.  The new code would be seven
+  bytes:
+    sub $4, %edi
+    sub %eax, (%edi)
+    mov (%edi), %eax
+  There's something analogous in `<`, although it only occurs three
+  times.
+- in `JZ`, `jnz`, and `Getchar`, there are occurrences of `pop %eax`,
+  which is one byte (88).  The new code would be five bytes:
+    sub $4, %edi
+    mov (%edi), %eax
+  `JZ` occurs 38 times in the output, `jnz` occurs 5 times, and
+  Getchar occurs once.
+- `Msyscall` would change a bit.
+
+There are 193 occurrences of `push %eax` in the output code at the
+moment, each of which is followed by a move-immediate into %eax.
+These would just change to `stosd`, which is also one byte.
+
+So this change would increase the amount of machine code in the
+compiler source by 10 - 3 + 7 - 4 + 5 - 1 + 5 - 1 + 5 - 1 = 22 bytes,
+which is a lot given that there’s only 58 bytes there now; I think
+that would make the compiler harder to follow, although `Restack` does
+too.  It would also increase the size of the compiler output by (10 -
+3) * 17 + (7 - 4) * 23 + (5 - 1) * (38 + 5 + 1) = 364 bytes, although
+it would eliminate 430 `xchg %esp, %ebp` instructions, two bytes each,
+for a total of 2 * 430 - 364 = 496 bytes less; and the resulting
+program would gain (4 - 2) * 17 + (3 - 2) * 23 + (2 - 1) * (38 + 5 +
+1) = 101 instructions, then lose the 430 `xchg` instructions.
+
+My initial thought was that it would be silly to space-optimize
+popping at the expense of pushing; although they happen the same
+number of times during the execution of the program, generally more
+data is passed to callees than is returned to callers, so the number
+of push sites is greater than the number of pop sites.  (In this
+program, it’s about a factor of 2, according to the above numbers.)
+Also, consumers of values from the stack often want to do something
+interesting with the top two values on the stack, not just discard the
+top-of-stack: `-` subtracts, `<` compares, `!` and `store` send it to
+memory.  Only `JZ` and `jnz` (and `pop`) just want to discard
+top-of-stack — but to my surprise, they make up half of the pops.
+
+However, I wasn’t thinking about the number of places in the compiler
+where machine code would be added.  What if I used `%esi` instead of
+`%edi`, to get a single-byte single-instruction pop (in the form of
+`lodsl`) instead of a single-byte push?  This would make `Lit` (the
+only thing that increases the depth of the operand stack) uglier, and
+each of the 193 occurrencies of `push %eax` that result from the 193
+calls to `Lit` in the compilation process would get four bytes bigger
+(totaling 772 extra bytes) but the seven or so primitives that
+*decrease* the depth of the operand stack would gain less extra
+complexity.  And we’d still lose the `xchg %esp, %ebp` crap, including
+the code to avoid emitting them.
+
 What’s Next
 -----------
 
+Maybe putting the operand stack on `%esi`.
+
+Maybe factor some commonality out of the implementation of `-` and
+`<`.
+
+If we move the creation of the ELF header and `Msyscall` and `/buf` to
+run-time instead of compile-time, we could eliminate the `#` and
+`byte` compile-time directives, both from the compiler and the
+interpreter; the output would be simpler; `Msyscall` and `/buf`
+wouldn't need two separate names and tricky code to poke them into the
+output; the tricky code wouldn’t need a nine-line comment explaining
+it; the characters ‘E’, ‘L’, and ‘F’ wouldn’t need to be magic
+numbers.
+
+Maybe factor out "0 1 -"!
+
+Maybe pull the interpreter and compiler code into a literate document
+that explains them.
+
 Maybe building a compiler for a slightly bigger and better language on
-top of this one.  Maybe something like Lua, Scheme, or Smalltalk.
+top of this one.  Maybe something like Lua, Scheme, or Smalltalk.  A
+first step toward that would be something that makes parsing a little
+more convenient.  Another step might be to establish some kind of
+intermediate representation in the compiler, and perhaps some kind of
+pattern-matching facility to make it easier to specify rewrites on the
+intermediate representation (either for optimizations or for code
+generation).
 
 Certainly the system as it exists is not that convenient to program
 in, the code is pretty hard to read, and when it fails, it is hard to
-debug.  Garbage collection, arrays with bounds-checking, finite
-maps (associative arrays), strong typing (really any typing), dynamic
-dispatch, metaprogramming, and so on, these would all help.
+debug — especially in the compiler, which doesn’t have any way to emit
+error messages.  Garbage collection, arrays with bounds-checking,
+finite maps (associative arrays), strong typing (any typing, really),
+dynamic dispatch, some thing that saves you from incorrect stack
+effects, metaprogramming, and so on, these would all help; an
+interactive REPL would be a useful non-linguistic feature.
 
 Related work
 ------------
@@ -341,11 +487,13 @@ Sample code:
       return 0
     end
 
+FIRST and THIRD, from the IOCCC entry.
+
 Ian Piumarta’s COLA system.
 
 Oberon.
 
-OTCC.
+Fabrice Bellard’s OTCC.
 
 F-83.
 

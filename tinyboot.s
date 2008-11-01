@@ -62,3 +62,33 @@ getchar:
 okay:   ## load buffer address again, then
         ## fetch byte
         movzbl (%eax), %eax
+xchg:   xchg %eax, (%esp)       # hex 87 04 24, decimal 135 4 36
+        xchg (%esp), %eax       # syntactic variant of the above
+add:    add (%esp), %eax
+        pop %ecx
+newstuff:
+        stosl
+        sub -4(%edi), %eax
+        add $-4, %edi
+	sub (%edi), %eax
+        sub $4, %edi
+        lea -4(%edi), %edi
+        mov (%edi), %eax
+newstore:
+        sub $8, %edi
+        mov 4(%edi), %ecx
+        mov %ecx, (%eax)
+        mov (%edi), %eax
+newsubtract:
+        sub $4, %edi
+        sub %eax, (%edi)
+        mov (%edi), %eax
+newbytestore:
+        sub $8, %edi
+        mov 4(%edi), %ecx
+        mov (%ebx,%edi,1), %ecx # alternately if %ebx==4; no shorter tho
+        movb %cl, (%eax)
+        mov (%edi), %eax
+newentrypoint:
+        mov %esp, %edi
+        sub $2048, %edi

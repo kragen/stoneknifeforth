@@ -1,9 +1,74 @@
-( A tiny bootstrap Forth compiler written in itself.
+( A tiny bootstrap Forth compiler written in itself. -*- coding: utf-8 -*-
 
 Generates an ELF executable for x86 Linux.
 
-Bytes preceded by ' and numbers are compiled into instructions to push
-their values on the stack.
+Note that this file is Unicode, encoded in UTF-8.  This should be an
+upper-case Y with a grave accent mark `: Ỳ.  If that's okay, you can
+ignore the following indented paragraph.
+
+    If it appears as a lower-case "a" with an acute accent, followed
+    by a right guillemot [looking like ">>"], followed by a
+    superscript "2", you are incorrectly interpreting this file as
+    ISO-8859-1 or perhaps ISO-8859-15 or Windows-1252.  If it appears
+    as a centered dot, followed by a superscript lowercase "a",
+    followed by a less-than-or-equal sign, you are incorrectly
+    interpreting the file as MacRoman.  If it appears as a capital "A"
+    followed by some smoothly joined double lines, you are incorrectly
+    interpreting the file as KOI8-R.  If it appears as a German "sz"
+    ligature [which kind of looks like the letter "B"] followed by an
+    upside-down "L" drawn with double lines and then a sort of
+    checkerboard, you are incorrectly interpreting the file as some
+    old IBM PC video adapter character set.  If it appears as an "AE"
+    ligature, followed by a right guillemot [">>"], followed by a
+    dagger [looks like a crucifix], you are incorrectly interpreting
+    the file as the old PostScript font encoding.  In any of these
+    cases, you have configured your software to be compatible with
+    obsolete junk equipment from the 1970s instead of the several
+    billion people who live outside of your country, or perhaps it has
+    been incorrectly transcoded before you got it.  Hopefully this is
+    helpful in diagnosing and fixing the problem.
+
+On the language:
+
+It’s a dumbed-down Forth with no compile-time execution, in which only
+the first byte of each word is significant, with some heterodox names
+for functions.  Bytes preceded by ' are literals for their numerical
+value, e.g. “'A” is 65.
+
+What that means, if you know how to program but don’t know Forth:
+
+Each word of the program is generally a subroutine call.  Words are
+separated by spaces.  There are no types. There’s an implicit stack;
+words pop their input off the stack and push their output onto it.
+Numbers and literal bytes are pushed onto the stack.
+
+So “2 3 + 4 -” calculates 2 + 3 - 4; “2 3 4 + -” calculates
+2 - [3 + 4].  “'Z 'A -” calculates the ASCII value of “Z” minus the
+ASCII value of “A”, i.e. it calculates 25.  [“+” isn’t in the base
+language implemented by the compiler; it’s a user-defined function.
+“-” is in the base language.]
+
+“: foo” marks the beginning of a subroutine called “foo”; “;” is the
+return instruction.  So “: . %flush u ;” defines a subroutine called
+“.” which consists first of calling “%flush”, then calling “u”, then
+returning.
+
+“var foo” marks the beginning of a variable named “foo”; the word
+“foo” thereafter will push its address onto the stack.  “# 37”
+includes the number 37 in the program at that point as a 32-bit
+number, so “var X # 0” creates a variable “X” and puts four bytes of
+zeroes there.
+
+“@” and “!” fetch from and store to a memory address respectively.  So
+“var X # 0 : dup X !  X @ X @ ;” creates a variable X, gives it 32
+bits of storage initialized to 0, and defines a subroutine called
+“dup”.  “dup” takes whatever is on the stack, stores it in those 32
+bits of storage at “X”, then fetches it out of X twice, leaving two
+copies of it on the stack.
+
+Combining all of the above, “var HERE # 0 : forward HERE @ + HERE ! ;”
+fetches the value at the location “HERE”, adds whatever was on the
+stack to it, and stores the result back at “HERE”.
 
 Compile-time primitives:
 ( — defines a comment that extends to the next right-paren
@@ -26,7 +91,8 @@ G — gets a byte from stdin
 W — given an address and size on the stack, writes the specified number of 
     bytes to stdout
 Q — exits the program with a return code of 0
-- — subtracts two numbers
+- — subtracts two numbers.  [Addition isn't a primitive because it’s easy to 
+    synthesize from subtraction.]
 @ — fetches a word from memory
 ! — stores to a word in memory whose address is on top of the stack
 ; — returns from a function
@@ -61,7 +127,7 @@ U — the peephole buffer itself, a boolean storing whether there’s a pending
     `xchg %ebp, %esp`
 T — table of types of definitions
 A — table of addresses of definitions
-F — 4 *
+F — multiply by four
 C — register a Colon definition in the tables
 V — register a Variable definition in the tables
 a — translate an address from compiler address space to user address space
@@ -146,11 +212,23 @@ Directory of magic numbers used, other than 0 and 1:
        constructed, ending just before the compiled program itself.
 8192 — the offset at which the compiler constructs the compiled program.
 655360 — the total memory space allocated for the program
+
+Register-use conventions:
+`%eax` — the top of the operand stack
+`%esp` — normally, points to the rest of the operand stack in memory, in
+         the usual `%esp` way: growing downward, predecrement, postincrement.
+         Temporarily swapped with `%ebp` during `call` and `ret` instructions.
+`%ebp` — normally, points to the return stack in memory, in the usual
+         `%esp` way.
+`%ecx` — occasionally used as a scratch register
+Other registers are only used to pass arguments to Linux system calls.
 )
 
 var header ( ELF header, Elf32_Ehdr )
 ( ELF info from http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
-( but I’m using 4096 for my origin rather than 0x08048000)
+( but I’m using 4096 for my origin rather than 0x08048000. )
+( I could use 0 but then null pointer references would usually give incorrect
+  results instead of usually crashing. )
     ( e_ident:) byte 127 byte 69 ( E) byte 76 ( L) byte 70 ( F) 
                 byte 1 byte 1 byte 1
                 ( 9 bytes of padding)
@@ -159,28 +237,30 @@ var header ( ELF header, Elf32_Ehdr )
                 byte 0 byte 0 byte 0
      ( e_type:) byte 2 byte 0   ( e_machine:) byte 3 byte 0
   ( e_version:) # 1               ( e_entry:) var entry # 0
-               ( The program header offset is 52, the same as the header size,
-                  since the program header immediately follows this ELF header )
+               ( The program header offset is 52, the same 
+                 as the header size, since the program header
+                 immediately follows this ELF header. )
     ( e_phoff:) # 52              ( e_shoff:) # 0
     ( e_flags:) # 0              ( e_ehsize:) byte 52 byte 0 
 ( e_phentsize:) byte 32 byte 0    ( e_phnum:) byte 1 byte 0 
 ( e_shentsize:) byte 40 byte 0 ( e_shentnum:) byte 0 byte 0
  ( e_shstrndx:) byte 0 byte 0 
 
-( program header, Elf32_Phdr; note that we are now 52 bytes from ‘h’ )
+( Program header, Elf32_Phdr; note that we are now 52 bytes from `header`. )
       ( p_type:) # 1              ( p_offset:) # 0 
      ( p_paddr should be 0, not equal to p_vaddr as Brian has)
      ( p_vaddr:) var origin # 4096 ( p_paddr:) # 0
-( Note that you can only make p_memsz as large as you want if p_flags has a 
-  2 = PF_W in it.  Otherwise, even one extra byte results in a segfault.
-  655360 bytes should be enough for anyone.)
+( Note that you can only make `p_memsz` as large as you want if `p_flags` has a
+  2 = `PF_W` in it.  Otherwise, even one extra byte results in a segfault.
+  655360 bytes should be enough for anyone. )
     ( p_filesz:) var SIZE # 0      ( p_memsz:) # 655360
      ( p_flags:) # 7               ( p_align:) # 4096
 
-( b 7 b 7 b 7 b 7 b 7 ( to help disassemblers resync )
-var Msyscall  ( system call routine; called in program 
+( b 7 b 7 b 7 b 7 b 7 ( uncomment to help disassemblers resync )
+var Msyscall  ( System call routine; called in input program 
                 with lowercase `m`)
-  ( syscall number already in %eax )
+( Syscall number is already in %eax )
+( stack effect: arg2 arg3 arg1 syscallnum → syscallrv )
 ( xchg %ebp, %esp) byte 135 byte 236
 ( this really weird order is basically a special case for write(2)
 ( first we pop the first argument, then the third, then the second)
@@ -190,22 +270,12 @@ var Msyscall  ( system call routine; called in program
        ( int 0x80) byte 205 byte 128
 ( xchg %ebp, %esp) byte 135 byte 236
             ( ret) byte 195
-var /buf byte 0 ( a one-byte read buffer for the program being compiled )
-( okay, so let’s do two writes.
-The first write will write out the stuff that’s static, i.e. not
-generated by the compiler: all the stuff above.
-The second write will write out the stuff that’s the compiler uses H to write,
-starting from `$origin`.
-Then the only slightly hairy thing is to adjust `m` and `\` 
-to point to the right place: a bit before `$origin`. )
-var Z-end ( the end of the non-compiled stuff. )
-( so the correct adjustment is to add $ - Z-end to them. )
 
-var HERE # 0 ( “HERE”, where we’re compiling )
+var /buf byte 0 ( a one-byte read buffer for the program being compiled )
+var Z-end ( the end of the non-compiled stuff. )
 
 var X # 0  var Y # 0  ( temp vars )
-: dup  X !  X @  X @ ;  : pop X ! ;
-: xchg X ! Y ! X @ Y @ ; ( SWAP/exch )
+: dup  X !  X @  X @ ;  : pop X ! ;  : xchg X !  Y !  X @  Y @ ; ( SWAP/exch )
 
 : +  0 xchg -  - ;  ( a + b is a - [0 - b] )
 : $origin header 8192 + ;  ( this is where the program gets compiled )
@@ -215,8 +285,10 @@ var X # 0  var Y # 0  ( temp vars )
 : OR  [ pop 1 ; ] ;           : > xchg < ; ( greater-than )
 
 
+var HERE # 0 ( “HERE”, where we’re compiling )
+
 : forward HERE @ + HERE ! ; ( move HERE “forward” by a given number of bytes )
-: u HERE @ store  1 forward ; ( add a byte to the program being compiled )
+: u HERE @ store  1 forward ; ( Add a byte to the program being compiled )
 ( Restack emits an `xchg %ebp, %esp` — but we buffer it to see if it’s 
   canceled by another one before actually emitting it. U is the buffer, and 
   %flush flushes it.
@@ -224,9 +296,10 @@ var X # 0  var Y # 0  ( temp vars )
 var U # 0  : %flush U @ [ 135 u 236 u  0 U ! ] ;  : Restack U @ NOT U ! ;
 : . %flush u ;
 
-( T and A are two 1024-byte tables; since they should start out as zeroes,
+( Type and Addr are two 1024-byte tables; since they should start out as zeroes,
   we put them past the end of the program instead of allocating space for them.
-  The T and A routines return the address of an entry in the tables. )
+  The Type and Addr routines convert a byte value to the address of an entry 
+  in the tables. )
 : Four* dup + dup + ; ( 4 * )
 : Type Four* header 6144 + + ; ( Table of definition Types: 1=code, 2=data )
 : Addr Type 1024 + ;     ( table of definition Addresses )
@@ -234,26 +307,29 @@ var U # 0  : %flush U @ [ 135 u 236 u  0 U ! ] ;  : Restack U @ NOT U ! ;
 : Colon %flush dup Type 1 xchg !  HERE @ xchg Addr ! ;
 ( register a variable definition )
 : Var   %flush dup Type 2 xchg !  HERE @ xchg Addr ! ;
+
 : Isdigit dup '0 <  x '9 >  OR NOT ;
-var Buf # 0 ( buffer for getchar )
-( get next non-whitespace char )
-: getchar { Getchar Buf !  Buf @ '  = Buf @ 10 = OR NOT [ Buf @ ; ]  1 }
-( word: get next token, return its first char.  only consumes first digit of 
-  numbers )
-: word getchar dup Isdigit [ ; ] dup '' = [ ; ] dup 0 1 - = [ ; ]
-  { Getchar dup '  = [ pop ; ] dup 10 = [ pop ; ] 0 1 - = [ ; ]  1 }  
-( store word on top of stack at H, praise non-aligned access )
-: Encode %flush HERE @ !  4 forward ;
-: Lit 80 . ( push %eax ) 184 . ( load immediate %eax ) Encode ; ( literal)
 : tenstep xchg dup Four* + dup +  + ; ( for base-10 decoding: A B -> 10A + B )
-( parse a number from successive digits; first digit on stack )
+( Parses a number from successive digits; first digit is on stack. )
 : number '0 - { Getchar dup Isdigit NOT [ pop ; ] '0 - tenstep 1 }
 ( NOTE: number eats the next byte after the end of the number and discards it. )
 
-( convert from compiler address space to user space )
-: address  $origin -  Z-end header - +  origin @ + ;
+var Buf # 0 ( buffer for getchar )
+( get next non-whitespace char )
+: getchar { Getchar Buf !  Buf @ '  = Buf @ 10 = OR NOT [ Buf @ ; ]  1 }
+( word: Gets next token, returns its first char.  Only consumes first digit of 
+  numbers. )
+: word getchar dup Isdigit [ ; ] dup '' = [ ; ] dup 0 1 - = [ ; ]
+  { Getchar dup '  = [ pop ; ] dup 10 = [ pop ; ] 0 1 - = [ ; ]  1 }  
 
-( routine to compile bytes found in the table )
+( Stores word on top of stack at HERE, praise be for non-aligned access. )
+: Encode %flush HERE @ !  4 forward ;
+: Lit 80 . ( push %eax ) 184 . ( load immediate %eax ) Encode ; ( literal)
+
+( Converts a compiler address to an output-program address. )
+: addr  $origin -  Z-end header - +  origin @ + ;
+
+( Compiles a user-defined subroutine or variable, using Type and Addr )
 : &dispatch dup Type @ 1 = [ ( if it’s a subroutine...)
     Restack 232 . ( CALL instruction; now we have to compute the offset )
     HERE @ 4 + ( find address of next instruction )
@@ -320,16 +396,25 @@ var Buf # 0 ( buffer for getchar )
   { word dup 0 1 - = [ pop ; ] ( return if char is -1 )  Dispatch 1 }
 
 ^program-starts-here 
-( register `m` routine for system calls using dummy `HERE` )
+
+( The output of the compiler is in two blocks: the block of data from
+`header` up to `Z-end`, including the ELF headers, `Msyscall`, and
+`/buf`, and the block that is compiled using `HERE`, containing
+everything compiled from the input program, starting at `$origin`.  We
+fake up addresses for `Msyscall` and `/buf`, at the right relative
+position to `$origin` [as far before `$origin` as they actually are
+before `Z-end`], and poke them into the dictionary as `m` and `\` so
+that the output program can call them.  Then we actually compile some
+code for `Getchar` as if it were in the input program. )
+
 Msyscall $origin Z-end - + HERE ! 'm Colon
 /buf     $origin Z-end - + HERE ! '\ Var   ( register `\` variable )
-$origin HERE ! ( initialize H )
+$origin HERE ! ( initialize HERE )
 
-( routine for `G` — wow, this is awful! compiles to about 80 bytes )
-( 7 . 7 . 7 . 7 . 7 .  ( help disassemblers resync with the instruction stream )
+( routine for `Getchar` — wow, this is awful! compiles to about 80 bytes )
 'G Colon Restack ( define `G` )
-  '\ Dispatch 1 Lit 0 Lit 3 Lit 'm Dispatch ( \ 1 0 3 m →
-                                              syscall(__NR_read=3, 0, \, 1)
+  ( \         1     0     3      m → syscall(__NR_read=3, 0, \, 1)
+  '\ Dispatch 1 Lit 0 Lit 3 Lit 'm Dispatch 
   1 Lit '< Dispatch '[ Dispatch ( 1 < [ → if it’s less than 1 )
     88 . 0 1 - Lit '; Dispatch  ( then pop %eax and return -1 )
   '] Dispatch ( ] → otherwise, )
@@ -338,9 +423,9 @@ $origin HERE ! ( initialize H )
 '; Dispatch ( and return! )
 
 Kompile ( compile input into output )
-( now HERE - $origin is the size of the compiled part of the program
+( Now HERE - $origin is the size of the compiled part of the program
   and Z-end - header is the size of the fixed-format part. )
 HERE @  $origin -  Z-end header - +  SIZE ! ( store total size in SIZE )
-header   Z-end header - W ( write headers )
-$origin HERE @ $origin - W ( write compiled part of program )
+header   Z-end header - WRITE  ( write headers )
+$origin HERE @ $origin - WRITE ( write compiled part of program )
 QUIT
