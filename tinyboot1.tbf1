@@ -168,7 +168,6 @@ Directory of magic numbers used, other than 0 and 1:
      third byte of `sub %eax, [%esp]`
 40 — the size of any ELF segment headers that might exist
 41 — first byte of `sub %eax, [%esp]`
-43 — first byte of `sub [%esp], %eax`; maybe redundant
 52 — the size of the ELF header
 69 — ‘E’ ASCII uppercase E
 70 — ‘F’ ASCII uppercase F
@@ -189,7 +188,7 @@ Directory of magic numbers used, other than 0 and 1:
 137 — first byte of `mov %esp, %ebp`
 139 — first byte of `mov [%eax], %eax`, followed by 0
 143 — first byte of `pop [%eax]`, followed by 0
-158 — second byte of `setle %al`
+157 — second byte of `setge %al`
 184 — `mov $xxx, %eax` — load immediate %eax
 192 — second byte of `test %eax, %eax`;
       third byte of `setle %al`;
@@ -349,10 +348,9 @@ var Buf # 0 ( buffer for getchar )
   next instruction )
 : Patch  dup %flush HERE @ xchg - 1 -  xchg store ;  
 
-: implement-<
-    43 . 4 . 36 . ( sub [%esp], %eax )   88 . ( pop %eax ) 
-    15 . 158 . 192 . ( setle %al )       254 . 200 . ( dec %al )
-    15 . 190 . 192 . ( movsbl %al, %eax ) ;
+: compile-minus  41 . 4 . 36 . 88 . ;  ( `sub %eax, [%esp]; pop %eax` )
+: implement-<  compile-minus            15 . 157 . 192 . ( setge %al )
+               254 . 200 . ( dec %al )  15 . 190 . 192 . ( movsbl %al, %eax ) ;
 
 ( routine to dispatch a byte being compiled )
 : Dispatch
@@ -374,7 +372,7 @@ var Buf # 0 ( buffer for getchar )
   dup '} = [ pop jnz ; ]        ( compiles a conditional jump to that address )
   dup '' = [ pop Getchar Lit ; ]        ( pushes a character literal )
   dup 'v = [ pop word Var ; ]   ( registers the next word as a variable label )
-  dup '- = [ pop 41 . 4 . 36 . 88 . ; ] ( `sub %eax, [%esp]; pop %eax` )
+  dup '- = [ pop compile-minus ; ]
   dup 's = [ pop 89 . 136 . 8 . 88 . ; ] ( store is `pop %ecx; 
                                               movb %cl, [%eax]; pop %eax` )
   dup '< = [ pop implement-< ; ]
