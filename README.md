@@ -497,7 +497,7 @@ Fabrice Bellard’s [OTCC][7].
 
 [F-83][8].
 
-eForth, especially the ITC eForth.
+eForth, especially the ITC [eForth][9].
 
 Jack Crenshaw’s [Let’s Build a Compiler][4].  This is a how-to book
 that walks you through an incrementally-constructed compiler for a toy
@@ -508,7 +508,7 @@ representation, and it emits 68000 assembly code.
 
 Ikarus.
 
-Ur-Scheme.
+[Ur-Scheme][10].
 
 PyPy.
 
@@ -522,3 +522,5 @@ Edmund GRIMLEY EVANS
 [6]: http://piumarta.com/software/cola/
 [7]: https://bellard.org/otcc/
 [8]: https://github.com/ForthHub/F83
+[9]: http://www.exemark.com/FORTH/eForthOverviewv5.pdf
+[10]: http://canonical.org/~kragen/sw/urscheme/
