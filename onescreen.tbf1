@@ -1,0 +1,32 @@
+( The following is tinyboot.tbf1 reformatted to fit into a traditional
+80×25 terminal screen; as of this writing, it generates the same
+runnable ELF binary.  It works out to 1058 characters without the
+whitespace, but of course a little of that whitespace is semantically
+significant.  This is not readable in a useful way, but it shows just
+how little there is to StoneKnifeForth. )
+
+v h b 127 b 69 b 76 b 70 b 1 b 1 b 1 b 0 b 0 b 0 b 0 b 0 b 0 b 0 b 0 b 0 b 2 b 0
+b 3 b 0 # 1 v e # 0 # 52 # 0 # 0 b 52 b 0 b 32 b 0 b 1 b 0 b 40 b 0 b 0 b 0 b 0
+b 0 # 1 # 0 v o # 131072 # 0 v S # 0 # 655360 # 7 # 4096 v M b 135 b 236 b 91 b
+90 b 89 b 205 b 128 b 135 b 236 b 195 v / b 0 v Z v X # 0 v Y # 0 : d X ! X @ X
+@ ; : p X ! ; : x X ! Y ! X @ Y @ ; : + 0 x - - ; : $ h 8192 + ; : N [ 0 ; ] 1 ;
+: = - N ; : O [ p 1 ; ] ; : > x < ; v H # 0 : f H @ + H ! ; : u H @ s 1 f ; v U
+# 0 : % U @ [ 135 u 236 u 0 U ! ] ; : R U @ N U ! ; : . % u ; : F d + d + ; : T
+F h 6144 + + ; : A T 1024 + ; : C % d T 1 x ! H @ x A ! ; : V % d T 2 x ! H @ x
+A ! ; : I d '0 < x '9 > O N ; : t x d F + d + + ; : n '0 - { G d I N [ p ; ] '0
+- t 1 } v B # 0 : g { G B ! B @ '  = B @ 10 = O N [ B @ ; ] 1 } : w g d I [ ; ]
+d '' = [ ; ] d 0 1 - = [ ; ] { G d '  = [ p ; ] d 10 = [ p ; ] 0 1 - = [ ; ] 1 }
+: E % H @ ! 4 f ; : L 80 . 184 . E ; : a $ - Z h - + o @ + ; : & d T @ 1 = [ R
+232 . H @ 4 + x A @ x - E R ; ] A @ a L ; : J 133 . 192 . 88 . 116 . H @ 0 . ; :
+j 133 . 192 . 88 . 117 . H @ - 1 - . ; : P d % H @ x - 1 - x s ; : c 41 . 4 . 36
+. 88 . ; : i c 15 . 157 . 192 . 254 . 200 . 15 . 190 . 192 . ; : D d '( = [ p {
+G ') - } ; ] d '  = [ p ; ] d 10 = [ p ; ] d '# = [ p w n E ; D ] d 'b = [ p w n
+. ; ] d '; = [ p R 195 . ; ] d '! = [ p 143 . 0 . 88 . ; ] d '@ = [ p 139 . 0 .
+; ] d ': = [ p w C R ; ] d '[ = [ p J ; ] d '] = [ p P ; ] d '{ = [ p % H @ ; ]
+d '} = [ p j ; ] d '' = [ p G L ; ] d 'v = [ p w V ; ] d '- = [ p c ; ] d 's = [
+p 89 . 136 . 8 . 88 . ; ] d '< = [ p i ; ] d T @ [ & ; ] d I [ n L ; ] d '* = [
+p w n f ; ] d 'Q = [ p 0 L 0 L 0 L 1 L 'm & ; ] d 'W = [ p 1 L 4 L 'm & 88 . ; ]
+d '^ = [ p H @ a e ! 137 . 229 . 129 . 237 . 2048 E ; ] . ; : K { w d 0 1 - = [
+p ; ] D 1 } ^ M $ Z - + H ! 'm C / $ Z - + H ! '\ V $ H ! 'G C R '\ D 1 L 0 L 3
+L 'm D 1 L '< D '[ D 88 . 0 1 - L '; D '] D '\ D 15 . 182 . 0 . '; D K H @ $ - Z
+h - + S ! h Z h - W $ H @ $ - W Q
