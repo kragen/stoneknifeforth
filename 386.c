@@ -229,6 +229,7 @@ single_step(terp_t *terp)
    *
    */
   u8 *p = translate(terp, terp->eip, 6);
+  //printf("0x%x [%d]\n", terp->eip, *p);
   switch (*p) {
   IF 15:                        /* 0x0f */
     switch (p[1]) {
@@ -250,9 +251,11 @@ single_step(terp_t *terp)
     }
   IF 41:
     req(p[1] == 4 && p[2] == 36); /* sub %eax, (%esp) */
-    u32 nos = u32_in(translate(terp, terp->esp, 4));
-    terp->eax = nos - terp->eax;
-    set_flags(terp, terp->eax);
+    u8 *nosp = translate(terp, terp->esp, 4);
+    u32 nos = u32_in(nosp)
+      , result = nos - terp->eax;
+    set_flags(terp, result);
+    u32_out(nosp, result);
     terp->eip += 3;
   IF 80:                        /* push %eax */
     terp->esp -= 4;
@@ -329,7 +332,7 @@ single_step(terp_t *terp)
     req(p[1] == 200);
     terp->eax = (terp->eax & 0xFfffFf00) | ((terp->eax & 0xff) - 1);
     set_flags(terp, terp->eax & 0xff); /* N.B. shouldn’t touch CF */
-    terp->eip++;
+    terp->eip += 2;
   ELSE:
     die("Unimplemented instruction byte 0x%x at 0x%x", p[0], terp->eip);
   }
