@@ -1,0 +1,4 @@
+#!/bin/bash
+executable=$1
+: ${executable:=tinyboot1}
+objdump -b binary -m i386 --adjust-vma=0x20000 -D "$executable"

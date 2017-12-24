@@ -30,9 +30,42 @@ typedef int32_t s32;
 
 typedef struct {
   size_t brk;
-  u8 zf, sf, *ram;
+  u8 zf, sf, tracing_stacks, *ram;
   u32 eax, ebx, ecx, edx, esp, ebp, eip;
 } terp_t;
+
+static void
+ramdump(terp_t *terp, u32 start, u32 len)
+{
+  for (u32 addr = start; addr - start < len; addr += 16) {
+    printf("%08x: ", addr);
+    for (int j = 0; j < 16; j += 2) {
+      for (int k = 0; k < 2; k++) {
+        u32 addr_x = addr + j + k;
+        if (addr_x - start >= len) continue;
+        if (addr_x < 4096 || addr_x > terp->brk) {
+          printf("--");
+        } else {
+          printf("%02x", terp->ram[addr_x]);
+        }
+      }
+      printf(" ");
+    }
+    printf("\n");
+  }
+}
+
+static void
+regdump(terp_t *terp)
+{
+  printf("eip=0x%x, esp=0x%x, ebp=0x%x, brk=0x%x\n",
+         terp->eip, terp->esp, terp->ebp, (u32)terp->brk);
+  printf("eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n",
+         terp->eax, terp->ebx, terp->ecx, terp->edx);
+  printf("around eip:\n"); ramdump(terp, terp->eip-16, 32);
+  printf("around esp:\n"); ramdump(terp, terp->esp-16, 32);
+  printf("around ebp:\n"); ramdump(terp, terp->ebp-16, 32);
+}
 
 static void
 die(char *format, ...)
@@ -113,9 +146,9 @@ void load(u8 *elf_file, size_t length, terp_t *terp)
   terp->ram = ram;
 
   /* XXX need to set up a real stack somewhere! */
-  terp->esp = terp->ebp = terp->brk - 4;
+  terp->esp = terp->ebp = terp->brk;
   terp->eax = terp->ebx = terp->ecx = terp->edx = 0;
-  terp->zf = terp->sf = 0;
+  terp->zf = terp->sf = terp->tracing_stacks = 0;
   terp->eip = e_entry;
 }
 
@@ -126,6 +159,7 @@ static void
 *translate(terp_t *terp, u32 address, u32 length)
 {
   if (address > terp->brk || address + length > terp->brk) {
+    regdump(terp);
     die("address 0x%x with length 0x%x exceeds limit 0x%x",
         address,
         length,
@@ -133,6 +167,7 @@ static void
   }
 
   if (address < 4096) {
+    regdump(terp);
     die("zero-page address access at 0x%x with length 0x%x (eip=0x%x)",
         address,
         length,
@@ -148,6 +183,7 @@ implement_syscall(terp_t *terp, u32 eax, u32 ebx, u32 ecx, u32 edx)
   void *userptr;
   switch(eax) {
   IF 1: exit(ebx); die("exit failed"); return 0;
+  /* XXX these two are not indicating errors properly with -errno */
   IF 3: userptr = translate(terp, ecx, edx); return read(ebx, userptr, edx);
   IF 4: userptr = translate(terp, ecx, edx); return write(ebx, userptr, edx);
   ELSE:
@@ -156,10 +192,26 @@ implement_syscall(terp_t *terp, u32 eax, u32 ebx, u32 ecx, u32 edx)
   }
 }
 
+/* XXX make this take a name list instead of tag and argc */
+static void
+trace(char *tag, int argc, ...)
+{
+  va_list args;
+  va_start(args, argc);
+  printf("%s(", tag);
+  while (argc--) {
+    printf("0x%x", va_arg(args, int));
+    if (argc) printf(", ");
+  }
+  printf(")\n");
+  va_end(args);
+}
+
 static inline void
 pop(terp_t *terp, u32 *dest)
 {
   *dest = u32_in(translate(terp, terp->esp, 4));
+  if (terp->tracing_stacks) trace("pop", 2, terp->esp, *dest);
   terp->esp += 4;
 }
 
@@ -260,6 +312,7 @@ single_step(terp_t *terp)
   IF 80:                        /* push %eax */
     terp->esp -= 4;
     u32_out(translate(terp, terp->esp, 4), terp->eax);
+    if (terp->tracing_stacks) trace("push", 2, terp->esp, terp->eax);
     terp->eip++;
   IF 88:                        /* pop %eax */
     pop(terp, &terp->eax);
@@ -280,6 +333,10 @@ single_step(terp_t *terp)
     terp->eip += 2;
     if (!terp->zf) terp->eip += sex(p[1]);
   IF 129:                       /* subtract immediate from %ebp */
+    /* `sub` sets OF iff there is a signed overflow (a borrow from the
+       bit next to the MSB into the MSB) and CF iff there is an
+       unsigned overflow (a borrow from the MSB).  We currently aren’t
+       using CF, but OF is necessary for `setge` to work. */
     req(p[1] == 237);
     terp->ebp -= u32_in(p+2);
     set_flags(terp, terp->ebp);
@@ -322,12 +379,16 @@ single_step(terp_t *terp)
     terp->eip += 2;
     implement_syscall(terp, terp->eax, terp->ebx, terp->ecx, terp->edx);
   IF 232:                       /* call */
-    terp->eip += 5;
-    terp->esp -= 4;
-    u32_out(translate(terp, terp->esp, 4), terp->eip);
-    terp->eip += sex_dword(u32_in(p+1)); /* XXX could this result in
-                                            undefined signed overflow?
-                                            Ecch */
+    {
+      u32 old_eip = terp->eip;
+      terp->eip += 5;
+      terp->esp -= 4;
+      u32_out(translate(terp, terp->esp, 4), terp->eip);
+      terp->eip += sex_dword(u32_in(p+1)); /* XXX could this result in
+                                              undefined signed
+                                              overflow? Ecch */
+      if (terp->tracing_stacks) trace("call", 3, terp->esp, old_eip, terp->eip);
+    }
   IF 254:                       /* dec %al */
     req(p[1] == 200);
     terp->eax = (terp->eax & 0xFfffFf00) | ((terp->eax & 0xff) - 1);
@@ -353,6 +414,7 @@ int main(int argc, char **argv)
 
   terp_t terp;
   load(elf_file, read_size, &terp);
+  terp.tracing_stacks = 1;
   for (;;) {
     single_step(&terp);
   }
