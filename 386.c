@@ -12,6 +12,7 @@
  * The system calls that are used at the moment are _exit (#1), read
  * (#3), and write (#4).
  */
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -192,18 +193,20 @@ implement_syscall(terp_t *terp, u32 eax, u32 ebx, u32 ecx, u32 edx)
   }
 }
 
-/* XXX make this take a name list instead of tag and argc */
 static void
-trace(char *tag, int argc, ...)
+trace(char *vars, ...)
 {
   va_list args;
-  va_start(args, argc);
-  printf("%s(", tag);
-  while (argc--) {
-    printf("0x%x", va_arg(args, int));
-    if (argc) printf(", ");
+  va_start(args, vars);
+  char *vp = vars;
+  printf("{");
+  while (*vp) {
+    while (*vp && isspace(*vp)) vp++;
+    while (*vp && !isspace(*vp)) putchar(*vp++);
+    printf(": 0x%x", va_arg(args, int));
+    if (*vp) printf(", ");
   }
-  printf(")\n");
+  printf("}\n");
   va_end(args);
 }
 
@@ -211,7 +214,7 @@ static inline void
 pop(terp_t *terp, u32 *dest)
 {
   *dest = u32_in(translate(terp, terp->esp, 4));
-  if (terp->tracing_stacks) trace("pop", 2, terp->esp, *dest);
+  if (terp->tracing_stacks) trace("esp pop", terp->esp, *dest);
   terp->esp += 4;
 }
 
@@ -312,7 +315,7 @@ single_step(terp_t *terp)
   IF 80:                        /* push %eax */
     terp->esp -= 4;
     u32_out(translate(terp, terp->esp, 4), terp->eax);
-    if (terp->tracing_stacks) trace("push", 2, terp->esp, terp->eax);
+    if (terp->tracing_stacks) trace("esp push", terp->esp, terp->eax);
     terp->eip++;
   IF 88:                        /* pop %eax */
     pop(terp, &terp->eax);
@@ -387,7 +390,8 @@ single_step(terp_t *terp)
       terp->eip += sex_dword(u32_in(p+1)); /* XXX could this result in
                                               undefined signed
                                               overflow? Ecch */
-      if (terp->tracing_stacks) trace("call", 3, terp->esp, old_eip, terp->eip);
+      if (terp->tracing_stacks) trace("esp callsite callee",
+                                      terp->esp, old_eip, terp->eip);
     }
   IF 254:                       /* dec %al */
     req(p[1] == 200);
