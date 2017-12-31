@@ -234,7 +234,7 @@ sex_dword(u32 v)
 static inline void
 set_flags(terp_t *terp, u32 v)
 {
-  terp->zf = !!v;
+  terp->zf = !v;
   terp->sf = !!(v & 0xf0000000);
 }
 
