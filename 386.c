@@ -31,7 +31,7 @@ typedef int32_t s32;
 
 typedef struct {
   size_t brk;
-  u8 zf, sf, tracing_stacks, *ram;
+  u8 zf, sf, tracing_stacks, tracing_eip, *ram;
   u32 eax, ebx, ecx, edx, esp, ebp, eip;
 } terp_t;
 
@@ -149,7 +149,7 @@ void load(u8 *elf_file, size_t length, terp_t *terp)
   /* XXX need to set up a real stack somewhere! */
   terp->esp = terp->ebp = terp->brk;
   terp->eax = terp->ebx = terp->ecx = terp->edx = 0;
-  terp->zf = terp->sf = terp->tracing_stacks = 0;
+  terp->zf = terp->sf = terp->tracing_stacks = terp->tracing_eip = 0;
   terp->eip = e_entry;
 }
 
@@ -284,7 +284,8 @@ single_step(terp_t *terp)
    *
    */
   u8 *p = translate(terp, terp->eip, 6);
-  //printf("0x%x [%d]\n", terp->eip, *p);
+  if (terp->tracing_eip) trace("eip [eip]", terp->eip, *p);
+
   switch (*p) {
   IF 15:                        /* 0x0f */
     switch (p[1]) {
@@ -418,7 +419,7 @@ int main(int argc, char **argv)
 
   terp_t terp;
   load(elf_file, read_size, &terp);
-  terp.tracing_stacks = 1;
+  terp.tracing_eip = 1;
   for (;;) {
     single_step(&terp);
   }
