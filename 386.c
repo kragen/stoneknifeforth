@@ -36,36 +36,36 @@ typedef struct {
 } terp_t;
 
 static void
-ramdump(terp_t *terp, u32 start, u32 len)
+ramdump(FILE *f, terp_t *terp, u32 start, u32 len)
 {
   for (u32 addr = start; addr - start < len; addr += 16) {
-    printf("%08x: ", addr);
+    fprintf(f, "%08x: ", addr);
     for (int j = 0; j < 16; j += 2) {
       for (int k = 0; k < 2; k++) {
         u32 addr_x = addr + j + k;
         if (addr_x - start >= len) continue;
         if (addr_x < 4096 || addr_x > terp->brk) {
-          printf("--");
+          fprintf(f, "--");
         } else {
-          printf("%02x", terp->ram[addr_x]);
+          fprintf(f, "%02x", terp->ram[addr_x]);
         }
       }
-      printf(" ");
+      fprintf(f, " ");
     }
-    printf("\n");
+    fprintf(f, "\n");
   }
 }
 
 static void
 regdump(terp_t *terp)
 {
-  printf("eip=0x%x, esp=0x%x, ebp=0x%x, brk=0x%x\n",
+  fprintf(stderr, "eip=0x%x, esp=0x%x, ebp=0x%x, brk=0x%x\n",
          terp->eip, terp->esp, terp->ebp, (u32)terp->brk);
-  printf("eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n",
+  fprintf(stderr, "eax=0x%x, ebx=0x%x, ecx=0x%x, edx=0x%x\n",
          terp->eax, terp->ebx, terp->ecx, terp->edx);
-  printf("around eip:\n"); ramdump(terp, terp->eip-16, 32);
-  printf("around esp:\n"); ramdump(terp, terp->esp-16, 32);
-  printf("around ebp:\n"); ramdump(terp, terp->ebp-16, 32);
+  fprintf(stderr, "around eip:\n"); ramdump(stderr, terp, terp->eip-16, 32);
+  fprintf(stderr, "around esp:\n"); ramdump(stderr, terp, terp->esp-16, 32);
+  fprintf(stderr, "around ebp:\n"); ramdump(stderr, terp, terp->ebp-16, 32);
 }
 
 static void
@@ -199,14 +199,14 @@ trace(char *vars, ...)
   va_list args;
   va_start(args, vars);
   char *vp = vars;
-  printf("{");
+  fprintf(stderr, "{");
   while (*vp) {
     while (*vp && isspace(*vp)) vp++;
-    while (*vp && !isspace(*vp)) putchar(*vp++);
-    printf(": 0x%x", va_arg(args, int));
-    if (*vp) printf(", ");
+    while (*vp && !isspace(*vp)) fputc(*vp++, stderr);
+    fprintf(stderr, ": 0x%x", va_arg(args, int));
+    if (*vp) fprintf(stderr, ", ");
   }
-  printf("}\n");
+  fprintf(stderr, "}\n");
   va_end(args);
 }
 
