@@ -450,6 +450,21 @@ dynamic dispatch, some thing that saves you from incorrect stack
 effects, metaprogramming, and so on, these would all help; an
 interactive REPL would be a useful non-linguistic feature.
 
+Copyright status
+----------------
+
+I (Kragen Javier Sitaker) wrote StoneKnifeForth in 2008 and published
+it immediately in Argentina.  I didn't add an explicit copyright
+license at the time, but here is one now:
+
+> [To the extent possible under law, Kragen Javier Sitaker has waived
+  all copyright and related or neighboring rights to
+  StoneKnifeForth](https://creativecommons.org/publicdomain/zero/1.0/). This
+  work is published from: Argentina.
+
+For more details, I've included the CC0 "legal code" in
+[LICENSE.md](LICENSE.md).
+
 Related work
 ------------
 
