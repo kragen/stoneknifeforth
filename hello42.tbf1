@@ -46,7 +46,7 @@ v h ( ELF header, Elf32_Ehdr )
 
 ( program header, Elf32_Phdr; note that we are now 52 bytes from 'h' )
       ( p_type:) # 1       ( p_offset:) # 0 
-     ( p_vaddr:) v o # 4096 ( p_paddr:) # 0 ( should be 0, not org as Brian has)
+     ( p_vaddr:) v o # 131072 ( p_paddr:) # 0 ( should be 0, not org as Brian has)
 ( Note that you can only make p_memsz as large as you want if p_flags has a 
   2 = PF_W in it.  Otherwise, even one extra byte results in a segfault. )
     ( p_filesz:) v S # 0    ( p_memsz:) # 655360 ( should be enough for anyone)

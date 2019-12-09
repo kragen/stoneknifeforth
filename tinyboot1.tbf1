@@ -202,14 +202,14 @@ Directory of magic numbers used, other than 0 and 1:
 237 — second byte of `sub $xxx, %ebp`
 254 — first byte of `dec %al`
 1024 — a table size in bytes: 256 entries of 4 bytes each
-4096 — the program runs with its origin at 4096, 0x1000, because that still 
-       leaves hex addresses easy to type and read, while leaving it likely 
-       that null pointer references will crash the program rather than making
-       mysterious bugs.  Also there’s a buffer of this size, which will go 
-       away soon.
+4096 — There’s a buffer of this size, which will go away soon.
 6144 — 6 * 1024: the offset at which a couple of 1024-byte tables are 
        constructed, ending just before the compiled program itself.
 8192 — the offset at which the compiler constructs the compiled program.
+131072 — the program runs with its origin at 0x20000. We can't go lower than
+         0x10000 on new kernels unless we change the vm.mmap_min_addr sysctl
+         parameter. Give ourselves a comfortable margin above that while
+         still keeping addresses relatively short.
 655360 — the total memory space allocated for the program
 
 Register-use conventions:
@@ -225,7 +225,7 @@ Other registers are only used to pass arguments to Linux system calls.
 
 var header ( ELF header, Elf32_Ehdr )
 ( ELF info from http://www.muppetlabs.com/~breadbox/software/tiny/teensy.html)
-( but I’m using 4096 for my origin rather than 0x08048000. )
+( but I’m using 131072 for my origin rather than 0x08048000. )
 ( I could use 0 but then null pointer references would usually give incorrect
   results instead of usually crashing. )
     ( e_ident:) byte 127 byte 69 ( E) byte 76 ( L) byte 70 ( F) 
@@ -248,7 +248,7 @@ var header ( ELF header, Elf32_Ehdr )
 ( Program header, Elf32_Phdr; note that we are now 52 bytes from `header`. )
       ( p_type:) # 1              ( p_offset:) # 0 
      ( p_paddr should be 0, not equal to p_vaddr as Brian has)
-     ( p_vaddr:) var origin # 4096 ( p_paddr:) # 0
+     ( p_vaddr:) var origin # 131072 ( p_paddr:) # 0
 ( Note that you can only make `p_memsz` as large as you want if `p_flags` has a
   2 = `PF_W` in it.  Otherwise, even one extra byte results in a segfault.
   655360 bytes should be enough for anyone. )

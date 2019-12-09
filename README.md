@@ -502,17 +502,17 @@ Sample code:
       return 0
     end
 
-FIRST and THIRD, from the IOCCC entry.
+FIRST and THIRD, from [the IOCCC entry][5].
 
-Ian Piumarta’s COLA system.
+[Ian Piumarta’s COLA][6] system.
 
 Oberon.
 
-Fabrice Bellard’s OTCC.
+Fabrice Bellard’s [OTCC][7].
 
-F-83.
+[F-83][8].
 
-eForth, especially the ITC eForth.
+eForth, especially the ITC [eForth][9].
 
 Jack Crenshaw’s [Let’s Build a Compiler][4].  This is a how-to book
 that walks you through an incrementally-constructed compiler for a toy
@@ -523,7 +523,7 @@ representation, and it emits 68000 assembly code.
 
 Ikarus.
 
-Ur-Scheme.
+[Ur-Scheme][10].
 
 PyPy.
 
@@ -533,3 +533,9 @@ Edmund GRIMLEY EVANS
 <http://web.archive.org/web/20061108010907/http://www.rano.org/bcompiler.html>
 
 [4]: http://compilers.iecc.com/crenshaw/
+[5]: http://www.ioccc.org/1992/buzzard.2.design
+[6]: http://piumarta.com/software/cola/
+[7]: https://bellard.org/otcc/
+[8]: https://github.com/ForthHub/F83
+[9]: http://www.exemark.com/FORTH/eForthOverviewv5.pdf
+[10]: http://canonical.org/~kragen/sw/urscheme/

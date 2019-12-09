@@ -48,3 +48,5 @@ chmod 755 tb2
 time ./tinyboot1 < trimmed.tbf1 > trimmed
 cmp tb2 trimmed
 wc trimmed.tbf1
+
+cc -Wall 386.c -o 386
